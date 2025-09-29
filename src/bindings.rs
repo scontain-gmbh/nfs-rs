@@ -4173,6 +4173,72 @@ pub mod exports {
                             .finish()
                     }
                 }
+                /// Static file system info
+                #[repr(C)]
+                #[derive(Clone, Copy)]
+                pub struct FsInfo {
+                    pub attr: Option<Attr>,
+                    pub rtmax: u32,
+                    pub rtpref: u32,
+                    pub rtmult: u32,
+                    pub wtmax: u32,
+                    pub wtpref: u32,
+                    pub wtmult: u32,
+                    pub dtpref: u32,
+                    pub maxfilesize: u64,
+                    pub time_delta: Time,
+                    pub properties: u32,
+                }
+                impl ::core::fmt::Debug for FsInfo {
+                    fn fmt(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.debug_struct("FsInfo")
+                            .field("attr", &self.attr)
+                            .field("rtmax", &self.rtmax)
+                            .field("rtpref", &self.rtpref)
+                            .field("rtmult", &self.rtmult)
+                            .field("wtmax", &self.wtmax)
+                            .field("wtpref", &self.wtpref)
+                            .field("wtmult", &self.wtmult)
+                            .field("dtpref", &self.dtpref)
+                            .field("maxfilesize", &self.maxfilesize)
+                            .field("time-delta", &self.time_delta)
+                            .field("properties", &self.properties)
+                            .finish()
+                    }
+                }
+                /// Dynamic file system stats
+                #[repr(C)]
+                #[derive(Clone, Copy)]
+                pub struct FsStat {
+                    pub attr: Option<Attr>,
+                    pub tbytes: u64,
+                    pub fbytes: u64,
+                    pub abytes: u64,
+                    pub tfiles: u64,
+                    pub ffiles: u64,
+                    pub afiles: u64,
+                    pub invarsec: u32,
+                }
+                impl ::core::fmt::Debug for FsStat {
+                    fn fmt(
+                        &self,
+                        f: &mut ::core::fmt::Formatter<'_>,
+                    ) -> ::core::fmt::Result {
+                        f.debug_struct("FsStat")
+                            .field("attr", &self.attr)
+                            .field("tbytes", &self.tbytes)
+                            .field("fbytes", &self.fbytes)
+                            .field("abytes", &self.abytes)
+                            .field("tfiles", &self.tfiles)
+                            .field("ffiles", &self.ffiles)
+                            .field("afiles", &self.afiles)
+                            .field("invarsec", &self.invarsec)
+                            .finish()
+                    }
+                }
                 /// Path configuration
                 #[repr(C)]
                 #[derive(Clone, Copy)]
@@ -5187,6 +5253,244 @@ pub mod exports {
                         _ => {
                             let l1 = *arg0.add(12).cast::<*mut u8>();
                             let l2 = *arg0.add(16).cast::<usize>();
+                            _rt::cabi_dealloc(l1, l2, 1);
+                        }
+                    }
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_nfs_mount_fsinfo_cabi<T: GuestNfsMount>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
+                    let result0 = T::fsinfo(
+                        NfsMountBorrow::lift(arg0 as u32 as usize).get(),
+                    );
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result0 {
+                        Ok(e) => {
+                            *ptr1.add(0).cast::<u8>() = (0i32) as u8;
+                            let FsInfo {
+                                attr: attr2,
+                                rtmax: rtmax2,
+                                rtpref: rtpref2,
+                                rtmult: rtmult2,
+                                wtmax: wtmax2,
+                                wtpref: wtpref2,
+                                wtmult: wtmult2,
+                                dtpref: dtpref2,
+                                maxfilesize: maxfilesize2,
+                                time_delta: time_delta2,
+                                properties: properties2,
+                            } = e;
+                            match attr2 {
+                                Some(e) => {
+                                    *ptr1.add(8).cast::<u8>() = (1i32) as u8;
+                                    let Attr {
+                                        attr_type: attr_type3,
+                                        file_mode: file_mode3,
+                                        nlink: nlink3,
+                                        uid: uid3,
+                                        gid: gid3,
+                                        filesize: filesize3,
+                                        used: used3,
+                                        spec_data: spec_data3,
+                                        fsid: fsid3,
+                                        fileid: fileid3,
+                                        atime: atime3,
+                                        mtime: mtime3,
+                                        ctime: ctime3,
+                                    } = e;
+                                    *ptr1.add(16).cast::<i32>() = _rt::as_i32(attr_type3);
+                                    *ptr1.add(20).cast::<i32>() = _rt::as_i32(file_mode3);
+                                    *ptr1.add(24).cast::<i32>() = _rt::as_i32(nlink3);
+                                    *ptr1.add(28).cast::<i32>() = _rt::as_i32(uid3);
+                                    *ptr1.add(32).cast::<i32>() = _rt::as_i32(gid3);
+                                    *ptr1.add(40).cast::<i64>() = _rt::as_i64(filesize3);
+                                    *ptr1.add(48).cast::<i64>() = _rt::as_i64(used3);
+                                    let (t4_0, t4_1) = spec_data3;
+                                    *ptr1.add(56).cast::<i32>() = _rt::as_i32(t4_0);
+                                    *ptr1.add(60).cast::<i32>() = _rt::as_i32(t4_1);
+                                    *ptr1.add(64).cast::<i64>() = _rt::as_i64(fsid3);
+                                    *ptr1.add(72).cast::<i64>() = _rt::as_i64(fileid3);
+                                    let Time { seconds: seconds5, nseconds: nseconds5 } = atime3;
+                                    *ptr1.add(80).cast::<i32>() = _rt::as_i32(seconds5);
+                                    *ptr1.add(84).cast::<i32>() = _rt::as_i32(nseconds5);
+                                    let Time { seconds: seconds6, nseconds: nseconds6 } = mtime3;
+                                    *ptr1.add(88).cast::<i32>() = _rt::as_i32(seconds6);
+                                    *ptr1.add(92).cast::<i32>() = _rt::as_i32(nseconds6);
+                                    let Time { seconds: seconds7, nseconds: nseconds7 } = ctime3;
+                                    *ptr1.add(96).cast::<i32>() = _rt::as_i32(seconds7);
+                                    *ptr1.add(100).cast::<i32>() = _rt::as_i32(nseconds7);
+                                }
+                                None => {
+                                    *ptr1.add(8).cast::<u8>() = (0i32) as u8;
+                                }
+                            };
+                            *ptr1.add(104).cast::<i32>() = _rt::as_i32(rtmax2);
+                            *ptr1.add(108).cast::<i32>() = _rt::as_i32(rtpref2);
+                            *ptr1.add(112).cast::<i32>() = _rt::as_i32(rtmult2);
+                            *ptr1.add(116).cast::<i32>() = _rt::as_i32(wtmax2);
+                            *ptr1.add(120).cast::<i32>() = _rt::as_i32(wtpref2);
+                            *ptr1.add(124).cast::<i32>() = _rt::as_i32(wtmult2);
+                            *ptr1.add(128).cast::<i32>() = _rt::as_i32(dtpref2);
+                            *ptr1.add(136).cast::<i64>() = _rt::as_i64(maxfilesize2);
+                            let Time { seconds: seconds8, nseconds: nseconds8 } = time_delta2;
+                            *ptr1.add(144).cast::<i32>() = _rt::as_i32(seconds8);
+                            *ptr1.add(148).cast::<i32>() = _rt::as_i32(nseconds8);
+                            *ptr1.add(152).cast::<i32>() = _rt::as_i32(properties2);
+                        }
+                        Err(e) => {
+                            *ptr1.add(0).cast::<u8>() = (1i32) as u8;
+                            let Error {
+                                nfs_error_code: nfs_error_code9,
+                                message: message9,
+                            } = e;
+                            match nfs_error_code9 {
+                                Some(e) => {
+                                    *ptr1.add(8).cast::<u8>() = (1i32) as u8;
+                                    *ptr1.add(12).cast::<i32>() = _rt::as_i32(e);
+                                }
+                                None => {
+                                    *ptr1.add(8).cast::<u8>() = (0i32) as u8;
+                                }
+                            };
+                            let vec10 = (message9.into_bytes()).into_boxed_slice();
+                            let ptr10 = vec10.as_ptr().cast::<u8>();
+                            let len10 = vec10.len();
+                            ::core::mem::forget(vec10);
+                            *ptr1.add(20).cast::<usize>() = len10;
+                            *ptr1.add(16).cast::<*mut u8>() = ptr10.cast_mut();
+                        }
+                    };
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_nfs_mount_fsinfo<T: GuestNfsMount>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {}
+                        _ => {
+                            let l1 = *arg0.add(16).cast::<*mut u8>();
+                            let l2 = *arg0.add(20).cast::<usize>();
+                            _rt::cabi_dealloc(l1, l2, 1);
+                        }
+                    }
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_method_nfs_mount_fsstat_cabi<T: GuestNfsMount>(
+                    arg0: *mut u8,
+                ) -> *mut u8 {
+                    #[cfg(target_arch = "wasm32")] _rt::run_ctors_once();
+                    let result0 = T::fsstat(
+                        NfsMountBorrow::lift(arg0 as u32 as usize).get(),
+                    );
+                    let ptr1 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    match result0 {
+                        Ok(e) => {
+                            *ptr1.add(0).cast::<u8>() = (0i32) as u8;
+                            let FsStat {
+                                attr: attr2,
+                                tbytes: tbytes2,
+                                fbytes: fbytes2,
+                                abytes: abytes2,
+                                tfiles: tfiles2,
+                                ffiles: ffiles2,
+                                afiles: afiles2,
+                                invarsec: invarsec2,
+                            } = e;
+                            match attr2 {
+                                Some(e) => {
+                                    *ptr1.add(8).cast::<u8>() = (1i32) as u8;
+                                    let Attr {
+                                        attr_type: attr_type3,
+                                        file_mode: file_mode3,
+                                        nlink: nlink3,
+                                        uid: uid3,
+                                        gid: gid3,
+                                        filesize: filesize3,
+                                        used: used3,
+                                        spec_data: spec_data3,
+                                        fsid: fsid3,
+                                        fileid: fileid3,
+                                        atime: atime3,
+                                        mtime: mtime3,
+                                        ctime: ctime3,
+                                    } = e;
+                                    *ptr1.add(16).cast::<i32>() = _rt::as_i32(attr_type3);
+                                    *ptr1.add(20).cast::<i32>() = _rt::as_i32(file_mode3);
+                                    *ptr1.add(24).cast::<i32>() = _rt::as_i32(nlink3);
+                                    *ptr1.add(28).cast::<i32>() = _rt::as_i32(uid3);
+                                    *ptr1.add(32).cast::<i32>() = _rt::as_i32(gid3);
+                                    *ptr1.add(40).cast::<i64>() = _rt::as_i64(filesize3);
+                                    *ptr1.add(48).cast::<i64>() = _rt::as_i64(used3);
+                                    let (t4_0, t4_1) = spec_data3;
+                                    *ptr1.add(56).cast::<i32>() = _rt::as_i32(t4_0);
+                                    *ptr1.add(60).cast::<i32>() = _rt::as_i32(t4_1);
+                                    *ptr1.add(64).cast::<i64>() = _rt::as_i64(fsid3);
+                                    *ptr1.add(72).cast::<i64>() = _rt::as_i64(fileid3);
+                                    let Time { seconds: seconds5, nseconds: nseconds5 } = atime3;
+                                    *ptr1.add(80).cast::<i32>() = _rt::as_i32(seconds5);
+                                    *ptr1.add(84).cast::<i32>() = _rt::as_i32(nseconds5);
+                                    let Time { seconds: seconds6, nseconds: nseconds6 } = mtime3;
+                                    *ptr1.add(88).cast::<i32>() = _rt::as_i32(seconds6);
+                                    *ptr1.add(92).cast::<i32>() = _rt::as_i32(nseconds6);
+                                    let Time { seconds: seconds7, nseconds: nseconds7 } = ctime3;
+                                    *ptr1.add(96).cast::<i32>() = _rt::as_i32(seconds7);
+                                    *ptr1.add(100).cast::<i32>() = _rt::as_i32(nseconds7);
+                                }
+                                None => {
+                                    *ptr1.add(8).cast::<u8>() = (0i32) as u8;
+                                }
+                            };
+                            *ptr1.add(104).cast::<i64>() = _rt::as_i64(tbytes2);
+                            *ptr1.add(112).cast::<i64>() = _rt::as_i64(fbytes2);
+                            *ptr1.add(120).cast::<i64>() = _rt::as_i64(abytes2);
+                            *ptr1.add(128).cast::<i64>() = _rt::as_i64(tfiles2);
+                            *ptr1.add(136).cast::<i64>() = _rt::as_i64(ffiles2);
+                            *ptr1.add(144).cast::<i64>() = _rt::as_i64(afiles2);
+                            *ptr1.add(152).cast::<i32>() = _rt::as_i32(invarsec2);
+                        }
+                        Err(e) => {
+                            *ptr1.add(0).cast::<u8>() = (1i32) as u8;
+                            let Error {
+                                nfs_error_code: nfs_error_code8,
+                                message: message8,
+                            } = e;
+                            match nfs_error_code8 {
+                                Some(e) => {
+                                    *ptr1.add(8).cast::<u8>() = (1i32) as u8;
+                                    *ptr1.add(12).cast::<i32>() = _rt::as_i32(e);
+                                }
+                                None => {
+                                    *ptr1.add(8).cast::<u8>() = (0i32) as u8;
+                                }
+                            };
+                            let vec9 = (message8.into_bytes()).into_boxed_slice();
+                            let ptr9 = vec9.as_ptr().cast::<u8>();
+                            let len9 = vec9.len();
+                            ::core::mem::forget(vec9);
+                            *ptr1.add(20).cast::<usize>() = len9;
+                            *ptr1.add(16).cast::<*mut u8>() = ptr9.cast_mut();
+                        }
+                    };
+                    ptr1
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_method_nfs_mount_fsstat<T: GuestNfsMount>(
+                    arg0: *mut u8,
+                ) {
+                    let l0 = i32::from(*arg0.add(0).cast::<u8>());
+                    match l0 {
+                        0 => {}
+                        _ => {
+                            let l1 = *arg0.add(16).cast::<*mut u8>();
+                            let l2 = *arg0.add(20).cast::<usize>();
                             _rt::cabi_dealloc(l1, l2, 1);
                         }
                     }
@@ -8480,6 +8784,14 @@ pub mod exports {
                     ///
                     /// Procedure DELEGRETURN returns the delegation represented by the current filehandle and stateid.
                     fn delegreturn(&self, stateid: u64) -> Result<(), Error>;
+                    /// FSINFO procedure
+                    ///
+                    /// Procedure FSINFO retrieves non-volatile file system state information.
+                    fn fsinfo(&self) -> Result<FsInfo, Error>;
+                    /// FSSTAT procedure
+                    ///
+                    /// Procedure FSSTAT retrieves volatile file system state information.
+                    fn fsstat(&self) -> Result<FsStat, Error>;
                     /// GETATTR procedure
                     ///
                     /// Procedure GETATTR retrieves the attributes for a specified file system object.
@@ -8878,6 +9190,26 @@ pub mod exports {
                         _post_return_method_nfs_mount_delegreturn(arg0 : * mut u8,) {
                         $($path_to_types)*::
                         __post_return_method_nfs_mount_delegreturn::<<$ty as
+                        $($path_to_types)*:: Guest >::NfsMount > (arg0) } #[export_name =
+                        "component:nfs-rs/nfs#[method]nfs-mount.fsinfo"] unsafe extern
+                        "C" fn export_method_nfs_mount_fsinfo(arg0 : * mut u8,) -> * mut
+                        u8 { $($path_to_types)*::
+                        _export_method_nfs_mount_fsinfo_cabi::<<$ty as
+                        $($path_to_types)*:: Guest >::NfsMount > (arg0) } #[export_name =
+                        "cabi_post_component:nfs-rs/nfs#[method]nfs-mount.fsinfo"] unsafe
+                        extern "C" fn _post_return_method_nfs_mount_fsinfo(arg0 : * mut
+                        u8,) { $($path_to_types)*::
+                        __post_return_method_nfs_mount_fsinfo::<<$ty as
+                        $($path_to_types)*:: Guest >::NfsMount > (arg0) } #[export_name =
+                        "component:nfs-rs/nfs#[method]nfs-mount.fsstat"] unsafe extern
+                        "C" fn export_method_nfs_mount_fsstat(arg0 : * mut u8,) -> * mut
+                        u8 { $($path_to_types)*::
+                        _export_method_nfs_mount_fsstat_cabi::<<$ty as
+                        $($path_to_types)*:: Guest >::NfsMount > (arg0) } #[export_name =
+                        "cabi_post_component:nfs-rs/nfs#[method]nfs-mount.fsstat"] unsafe
+                        extern "C" fn _post_return_method_nfs_mount_fsstat(arg0 : * mut
+                        u8,) { $($path_to_types)*::
+                        __post_return_method_nfs_mount_fsstat::<<$ty as
                         $($path_to_types)*:: Guest >::NfsMount > (arg0) } #[export_name =
                         "component:nfs-rs/nfs#[method]nfs-mount.getattr"] unsafe extern
                         "C" fn export_method_nfs_mount_getattr(arg0 : * mut u8, arg1 : *
@@ -9283,9 +9615,9 @@ pub mod exports {
                 #[doc(hidden)]
                 pub(crate) use __export_component_nfs_rs_nfs_cabi;
                 #[repr(align(8))]
-                struct _RetArea([::core::mem::MaybeUninit<u8>; 120]);
+                struct _RetArea([::core::mem::MaybeUninit<u8>; 160]);
                 static mut _RET_AREA: _RetArea = _RetArea(
-                    [::core::mem::MaybeUninit::uninit(); 120],
+                    [::core::mem::MaybeUninit::uninit(); 160],
                 );
             }
         }
@@ -9523,8 +9855,8 @@ pub(crate) use __export_nfs_rs_impl as export;
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.30.0:nfs-rs:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 7838] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xa1<\x01A\x02\x01A\x1f\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 8127] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xc2>\x01A\x02\x01A\x1f\
 \x01B\x0a\x04\0\x08pollable\x03\x01\x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\x16[\
 method]pollable.ready\x01\x02\x01@\x01\x04self\x01\x01\0\x04\0\x16[method]pollab\
 le.block\x01\x03\x01p\x01\x01py\x01@\x01\x02in\x04\0\x05\x04\0\x04poll\x01\x06\x03\
@@ -9618,72 +9950,78 @@ ocket\x01B\x0c\x02\x03\x02\x01\x06\x04\0\x07network\x03\0\0\x02\x03\x02\x01\x08\
 \0\x0aerror-code\x03\0\x02\x02\x03\x02\x01\x10\x04\0\x11ip-address-family\x03\0\x04\
 \x02\x03\x02\x01\x12\x04\0\x0atcp-socket\x03\0\x06\x01i\x07\x01j\x01\x08\x01\x03\
 \x01@\x01\x0eaddress-family\x05\0\x09\x04\0\x11create-tcp-socket\x01\x0a\x03\x01\
-$wasi:sockets/tcp-create-socket@0.2.0\x05\x13\x01B~\x01p}\x04\0\x02fh\x03\0\0\x01\
-p}\x04\0\x05bytes\x03\0\x02\x01r\x02\x07secondsy\x08nsecondsy\x04\0\x04time\x03\0\
-\x04\x01o\x02yy\x01r\x0d\x09attr-typey\x09file-modey\x05nlinky\x03uidy\x03gidy\x08\
-filesizew\x04usedw\x09spec-data\x06\x04fsidw\x06fileidw\x05atime\x05\x05mtime\x05\
-\x05ctime\x05\x04\0\x04attr\x03\0\x07\x01k\x08\x01r\x02\x03obj\x01\x04attr\x09\x04\
-\0\x07obj-res\x03\0\x0a\x01r\x07\x04attr\x09\x07linkmaxy\x08name-maxy\x08no-trun\
-c\x7f\x10chown-restricted\x7f\x10case-insensitive\x7f\x0fcase-preserving\x7f\x04\
-\0\x09path-conf\x03\0\x0c\x01r\x02\x06fileidw\x09file-names\x04\0\x0dreaddir-ent\
-ry\x03\0\x0e\x01r\x04\x06fileidw\x09file-names\x04attr\x09\x06handle\x01\x04\0\x11\
-readdirplus-entry\x03\0\x10\x01m\x03\x06nfs-v3\x06nfs-v4\x08nfs-v4p1\x04\0\x0bnf\
-s-version\x03\0\x12\x01kz\x01r\x02\x0enfs-error-code\x14\x07messages\x04\0\x05er\
-ror\x03\0\x15\x04\0\x09nfs-mount\x03\x01\x01h\x17\x01j\0\x01\x16\x01@\x01\x04sel\
-f\x18\0\x19\x04\0\x19[method]nfs-mount.null-op\x01\x1a\x01j\x01y\x01\x16\x01@\x03\
-\x04self\x18\x02fh\x01\x04modey\0\x1b\x04\0\x18[method]nfs-mount.access\x01\x1c\x01\
-@\x03\x04self\x18\x04paths\x04modey\0\x1b\x04\0\x1d[method]nfs-mount.access-path\
-\x01\x1d\x01@\x03\x04self\x18\x05seqidy\x07stateidw\0\x19\x04\0\x17[method]nfs-m\
-ount.close\x01\x1e\x01@\x04\x04self\x18\x02fh\x01\x06offsetw\x05county\0\x19\x04\
-\0\x18[method]nfs-mount.commit\x01\x1f\x01@\x04\x04self\x18\x04paths\x06offsetw\x05\
-county\0\x19\x04\0\x1d[method]nfs-mount.commit-path\x01\x20\x01j\x01\x0b\x01\x16\
-\x01@\x04\x04self\x18\x06dir-fh\x01\x08filenames\x04modey\0!\x04\0\x18[method]nf\
-s-mount.create\x01\"\x01@\x03\x04self\x18\x04paths\x04modey\0!\x04\0\x1d[method]\
-nfs-mount.create-path\x01#\x01@\x02\x04self\x18\x08clientidw\0\x19\x04\0\x1c[met\
-hod]nfs-mount.delegpurge\x01$\x01@\x02\x04self\x18\x07stateidw\0\x19\x04\0\x1d[m\
-ethod]nfs-mount.delegreturn\x01%\x01j\x01\x08\x01\x16\x01@\x02\x04self\x18\x02fh\
-\x01\0&\x04\0\x19[method]nfs-mount.getattr\x01'\x01@\x02\x04self\x18\x04paths\0&\
-\x04\0\x1e[method]nfs-mount.getattr-path\x01(\x01k\x05\x01ky\x01kw\x01@\x09\x04s\
-elf\x18\x02fh\x01\x0bguard-ctime)\x04mode*\x03uid*\x03gid*\x04size+\x05atime)\x05\
-mtime)\0\x19\x04\0\x19[method]nfs-mount.setattr\x01,\x01@\x09\x04self\x18\x04pat\
-hs\x0dspecify-guard\x7f\x04mode*\x03uid*\x03gid*\x04size+\x05atime)\x05mtime)\0\x19\
-\x04\0\x1e[method]nfs-mount.setattr-path\x01-\x04\0\x17[method]nfs-mount.getfh\x01\
-\x1a\x01@\x04\x04self\x18\x06src-fh\x01\x0adst-dir-fh\x01\x0cdst-filenames\0&\x04\
-\0\x16[method]nfs-mount.link\x01.\x01@\x03\x04self\x18\x08src-paths\x08dst-paths\
-\0&\x04\0\x1b[method]nfs-mount.link-path\x01/\x01@\x04\x04self\x18\x08src-paths\x0a\
-dst-dir-fh\x01\x0cdst-filenames\0!\x04\0\x19[method]nfs-mount.symlink\x010\x01@\x03\
-\x04self\x18\x08src-paths\x08dst-paths\0!\x04\0\x1e[method]nfs-mount.symlink-pat\
-h\x011\x01j\x01s\x01\x16\x01@\x02\x04self\x18\x02fh\x01\02\x04\0\x1a[method]nfs-\
-mount.readlink\x013\x01@\x02\x04self\x18\x04paths\02\x04\0\x1f[method]nfs-mount.\
-readlink-path\x014\x01@\x03\x04self\x18\x06dir-fh\x01\x08filenames\0!\x04\0\x18[\
-method]nfs-mount.lookup\x015\x01@\x02\x04self\x18\x04paths\0!\x04\0\x1d[method]n\
-fs-mount.lookup-path\x016\x01j\x01\x0d\x01\x16\x01@\x02\x04self\x18\x02fh\x01\07\
-\x04\0\x1a[method]nfs-mount.pathconf\x018\x01@\x02\x04self\x18\x04paths\07\x04\0\
-\x1f[method]nfs-mount.pathconf-path\x019\x01j\x01\x03\x01\x16\x01@\x04\x04self\x18\
-\x02fh\x01\x06offsetw\x05county\0:\x04\0\x16[method]nfs-mount.read\x01;\x01@\x04\
-\x04self\x18\x04paths\x06offsetw\x05county\0:\x04\0\x1b[method]nfs-mount.read-pa\
-th\x01<\x01@\x04\x04self\x18\x02fh\x01\x06offsetw\x04data\x03\0\x1b\x04\0\x17[me\
-thod]nfs-mount.write\x01=\x01@\x04\x04self\x18\x04paths\x06offsetw\x04data\x03\0\
-\x1b\x04\0\x1c[method]nfs-mount.write-path\x01>\x01p\x0f\x01j\x01?\x01\x16\x01@\x02\
-\x04self\x18\x06dir-fh\x01\0\xc0\0\x04\0\x19[method]nfs-mount.readdir\x01A\x01@\x02\
-\x04self\x18\x08dir-paths\0\xc0\0\x04\0\x1e[method]nfs-mount.readdir-path\x01B\x01\
-p\x11\x01j\x01\xc3\0\x01\x16\x01@\x02\x04self\x18\x06dir-fh\x01\0\xc4\0\x04\0\x1d\
-[method]nfs-mount.readdirplus\x01E\x01@\x02\x04self\x18\x08dir-paths\0\xc4\0\x04\
-\0\"[method]nfs-mount.readdirplus-path\x01F\x01@\x04\x04self\x18\x06dir-fh\x01\x07\
-dirnames\x04modey\0!\x04\0\x17[method]nfs-mount.mkdir\x01G\x04\0\x1c[method]nfs-\
-mount.mkdir-path\x01#\x01@\x03\x04self\x18\x06dir-fh\x01\x08filenames\0\x19\x04\0\
-\x18[method]nfs-mount.remove\x01H\x01@\x02\x04self\x18\x04paths\0\x19\x04\0\x1d[\
-method]nfs-mount.remove-path\x01I\x01@\x03\x04self\x18\x06dir-fh\x01\x07dirnames\
-\0\x19\x04\0\x17[method]nfs-mount.rmdir\x01J\x04\0\x1c[method]nfs-mount.rmdir-pa\
-th\x01I\x01@\x05\x04self\x18\x0bfrom-dir-fh\x01\x0dfrom-filenames\x09to-dir-fh\x01\
-\x0bto-filenames\0\x19\x04\0\x18[method]nfs-mount.rename\x01K\x01@\x03\x04self\x18\
-\x09from-paths\x07to-paths\0\x19\x04\0\x1d[method]nfs-mount.rename-path\x01L\x04\
-\0\x18[method]nfs-mount.umount\x01\x1a\x01j\x01\x13\x01\x16\x01@\x01\x04self\x18\
-\0\xcd\0\x04\0\x19[method]nfs-mount.version\x01N\x01i\x17\x01j\x01\xcf\0\x01\x16\
-\x01@\x01\x03urls\0\xd0\0\x04\0\x13parse-url-and-mount\x01Q\x04\x01\x14component\
-:nfs-rs/nfs\x05\x14\x04\x01\x17component:nfs-rs/nfs-rs\x04\0\x0b\x0c\x01\0\x06nf\
-s-rs\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.215.0\
-\x10wit-bindgen-rust\x060.30.0";
+$wasi:sockets/tcp-create-socket@0.2.0\x05\x13\x01B\x88\x01\x01p}\x04\0\x02fh\x03\
+\0\0\x01p}\x04\0\x05bytes\x03\0\x02\x01r\x02\x07secondsy\x08nsecondsy\x04\0\x04t\
+ime\x03\0\x04\x01o\x02yy\x01r\x0d\x09attr-typey\x09file-modey\x05nlinky\x03uidy\x03\
+gidy\x08filesizew\x04usedw\x09spec-data\x06\x04fsidw\x06fileidw\x05atime\x05\x05\
+mtime\x05\x05ctime\x05\x04\0\x04attr\x03\0\x07\x01k\x08\x01r\x02\x03obj\x01\x04a\
+ttr\x09\x04\0\x07obj-res\x03\0\x0a\x01r\x0b\x04attr\x09\x05rtmaxy\x06rtprefy\x06\
+rtmulty\x05wtmaxy\x06wtprefy\x06wtmulty\x06dtprefy\x0bmaxfilesizew\x0atime-delta\
+\x05\x0apropertiesy\x04\0\x07fs-info\x03\0\x0c\x01r\x08\x04attr\x09\x06tbytesw\x06\
+fbytesw\x06abytesw\x06tfilesw\x06ffilesw\x06afilesw\x08invarsecy\x04\0\x07fs-sta\
+t\x03\0\x0e\x01r\x07\x04attr\x09\x07linkmaxy\x08name-maxy\x08no-trunc\x7f\x10cho\
+wn-restricted\x7f\x10case-insensitive\x7f\x0fcase-preserving\x7f\x04\0\x09path-c\
+onf\x03\0\x10\x01r\x02\x06fileidw\x09file-names\x04\0\x0dreaddir-entry\x03\0\x12\
+\x01r\x04\x06fileidw\x09file-names\x04attr\x09\x06handle\x01\x04\0\x11readdirplu\
+s-entry\x03\0\x14\x01m\x03\x06nfs-v3\x06nfs-v4\x08nfs-v4p1\x04\0\x0bnfs-version\x03\
+\0\x16\x01kz\x01r\x02\x0enfs-error-code\x18\x07messages\x04\0\x05error\x03\0\x19\
+\x04\0\x09nfs-mount\x03\x01\x01h\x1b\x01j\0\x01\x1a\x01@\x01\x04self\x1c\0\x1d\x04\
+\0\x19[method]nfs-mount.null-op\x01\x1e\x01j\x01y\x01\x1a\x01@\x03\x04self\x1c\x02\
+fh\x01\x04modey\0\x1f\x04\0\x18[method]nfs-mount.access\x01\x20\x01@\x03\x04self\
+\x1c\x04paths\x04modey\0\x1f\x04\0\x1d[method]nfs-mount.access-path\x01!\x01@\x03\
+\x04self\x1c\x05seqidy\x07stateidw\0\x1d\x04\0\x17[method]nfs-mount.close\x01\"\x01\
+@\x04\x04self\x1c\x02fh\x01\x06offsetw\x05county\0\x1d\x04\0\x18[method]nfs-moun\
+t.commit\x01#\x01@\x04\x04self\x1c\x04paths\x06offsetw\x05county\0\x1d\x04\0\x1d\
+[method]nfs-mount.commit-path\x01$\x01j\x01\x0b\x01\x1a\x01@\x04\x04self\x1c\x06\
+dir-fh\x01\x08filenames\x04modey\0%\x04\0\x18[method]nfs-mount.create\x01&\x01@\x03\
+\x04self\x1c\x04paths\x04modey\0%\x04\0\x1d[method]nfs-mount.create-path\x01'\x01\
+@\x02\x04self\x1c\x08clientidw\0\x1d\x04\0\x1c[method]nfs-mount.delegpurge\x01(\x01\
+@\x02\x04self\x1c\x07stateidw\0\x1d\x04\0\x1d[method]nfs-mount.delegreturn\x01)\x01\
+j\x01\x0d\x01\x1a\x01@\x01\x04self\x1c\0*\x04\0\x18[method]nfs-mount.fsinfo\x01+\
+\x01j\x01\x0f\x01\x1a\x01@\x01\x04self\x1c\0,\x04\0\x18[method]nfs-mount.fsstat\x01\
+-\x01j\x01\x08\x01\x1a\x01@\x02\x04self\x1c\x02fh\x01\0.\x04\0\x19[method]nfs-mo\
+unt.getattr\x01/\x01@\x02\x04self\x1c\x04paths\0.\x04\0\x1e[method]nfs-mount.get\
+attr-path\x010\x01k\x05\x01ky\x01kw\x01@\x09\x04self\x1c\x02fh\x01\x0bguard-ctim\
+e1\x04mode2\x03uid2\x03gid2\x04size3\x05atime1\x05mtime1\0\x1d\x04\0\x19[method]\
+nfs-mount.setattr\x014\x01@\x09\x04self\x1c\x04paths\x0dspecify-guard\x7f\x04mod\
+e2\x03uid2\x03gid2\x04size3\x05atime1\x05mtime1\0\x1d\x04\0\x1e[method]nfs-mount\
+.setattr-path\x015\x04\0\x17[method]nfs-mount.getfh\x01\x1e\x01@\x04\x04self\x1c\
+\x06src-fh\x01\x0adst-dir-fh\x01\x0cdst-filenames\0.\x04\0\x16[method]nfs-mount.\
+link\x016\x01@\x03\x04self\x1c\x08src-paths\x08dst-paths\0.\x04\0\x1b[method]nfs\
+-mount.link-path\x017\x01@\x04\x04self\x1c\x08src-paths\x0adst-dir-fh\x01\x0cdst\
+-filenames\0%\x04\0\x19[method]nfs-mount.symlink\x018\x01@\x03\x04self\x1c\x08sr\
+c-paths\x08dst-paths\0%\x04\0\x1e[method]nfs-mount.symlink-path\x019\x01j\x01s\x01\
+\x1a\x01@\x02\x04self\x1c\x02fh\x01\0:\x04\0\x1a[method]nfs-mount.readlink\x01;\x01\
+@\x02\x04self\x1c\x04paths\0:\x04\0\x1f[method]nfs-mount.readlink-path\x01<\x01@\
+\x03\x04self\x1c\x06dir-fh\x01\x08filenames\0%\x04\0\x18[method]nfs-mount.lookup\
+\x01=\x01@\x02\x04self\x1c\x04paths\0%\x04\0\x1d[method]nfs-mount.lookup-path\x01\
+>\x01j\x01\x11\x01\x1a\x01@\x02\x04self\x1c\x02fh\x01\0?\x04\0\x1a[method]nfs-mo\
+unt.pathconf\x01@\x01@\x02\x04self\x1c\x04paths\0?\x04\0\x1f[method]nfs-mount.pa\
+thconf-path\x01A\x01j\x01\x03\x01\x1a\x01@\x04\x04self\x1c\x02fh\x01\x06offsetw\x05\
+county\0\xc2\0\x04\0\x16[method]nfs-mount.read\x01C\x01@\x04\x04self\x1c\x04path\
+s\x06offsetw\x05county\0\xc2\0\x04\0\x1b[method]nfs-mount.read-path\x01D\x01@\x04\
+\x04self\x1c\x02fh\x01\x06offsetw\x04data\x03\0\x1f\x04\0\x17[method]nfs-mount.w\
+rite\x01E\x01@\x04\x04self\x1c\x04paths\x06offsetw\x04data\x03\0\x1f\x04\0\x1c[m\
+ethod]nfs-mount.write-path\x01F\x01p\x13\x01j\x01\xc7\0\x01\x1a\x01@\x02\x04self\
+\x1c\x06dir-fh\x01\0\xc8\0\x04\0\x19[method]nfs-mount.readdir\x01I\x01@\x02\x04s\
+elf\x1c\x08dir-paths\0\xc8\0\x04\0\x1e[method]nfs-mount.readdir-path\x01J\x01p\x15\
+\x01j\x01\xcb\0\x01\x1a\x01@\x02\x04self\x1c\x06dir-fh\x01\0\xcc\0\x04\0\x1d[met\
+hod]nfs-mount.readdirplus\x01M\x01@\x02\x04self\x1c\x08dir-paths\0\xcc\0\x04\0\"\
+[method]nfs-mount.readdirplus-path\x01N\x01@\x04\x04self\x1c\x06dir-fh\x01\x07di\
+rnames\x04modey\0%\x04\0\x17[method]nfs-mount.mkdir\x01O\x04\0\x1c[method]nfs-mo\
+unt.mkdir-path\x01'\x01@\x03\x04self\x1c\x06dir-fh\x01\x08filenames\0\x1d\x04\0\x18\
+[method]nfs-mount.remove\x01P\x01@\x02\x04self\x1c\x04paths\0\x1d\x04\0\x1d[meth\
+od]nfs-mount.remove-path\x01Q\x01@\x03\x04self\x1c\x06dir-fh\x01\x07dirnames\0\x1d\
+\x04\0\x17[method]nfs-mount.rmdir\x01R\x04\0\x1c[method]nfs-mount.rmdir-path\x01\
+Q\x01@\x05\x04self\x1c\x0bfrom-dir-fh\x01\x0dfrom-filenames\x09to-dir-fh\x01\x0b\
+to-filenames\0\x1d\x04\0\x18[method]nfs-mount.rename\x01S\x01@\x03\x04self\x1c\x09\
+from-paths\x07to-paths\0\x1d\x04\0\x1d[method]nfs-mount.rename-path\x01T\x04\0\x18\
+[method]nfs-mount.umount\x01\x1e\x01j\x01\x17\x01\x1a\x01@\x01\x04self\x1c\0\xd5\
+\0\x04\0\x19[method]nfs-mount.version\x01V\x01i\x1b\x01j\x01\xd7\0\x01\x1a\x01@\x01\
+\x03urls\0\xd8\0\x04\0\x13parse-url-and-mount\x01Y\x04\x01\x14component:nfs-rs/n\
+fs\x05\x14\x04\x01\x17component:nfs-rs/nfs-rs\x04\0\x0b\x0c\x01\0\x06nfs-rs\x03\0\
+\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.215.0\x10wit-bi\
+ndgen-rust\x060.30.0";
 #[inline(never)]
 #[doc(hidden)]
 pub fn __link_custom_section_describing_imports() {

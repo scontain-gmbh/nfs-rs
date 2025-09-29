@@ -333,6 +333,24 @@ impl From<FSINFO3resok> for FSInfo {
     }
 }
 
+impl From<FSInfo> for crate::mount::FSInfo {
+    fn from(info: FSInfo) -> Self {
+        Self {
+            attr: info.attr.map(Into::into),
+            rtmax: info.rtmax,
+            rtpref: info.rtpref,
+            rtmult: info.rtmult,
+            wtmax: info.wtmax,
+            wtpref: info.wtpref,
+            wtmult: info.wtmult,
+            dtpref: info.dtpref,
+            maxfilesize: info.size,
+            time_delta: info.time_delta,
+            properties: info.properties,
+        }
+    }
+}
+
 #[derive(Debug, Default, PartialEq)]
 pub struct FSStat {
     pub attr: Option<Fattr>,
@@ -356,6 +374,21 @@ impl From<FSSTAT3resok> for FSStat {
             ffiles: ok.ffiles,
             afiles: ok.afiles,
             invarsec: ok.invarsec,
+        }
+    }
+}
+
+impl From<FSStat> for crate::mount::FSStat {
+    fn from(stat: FSStat) -> Self {
+        Self {
+            attr: stat.attr.map(Into::into),
+            tbytes: stat.tbytes,
+            fbytes: stat.fbytes,
+            abytes: stat.abytes,
+            tfiles: stat.tfiles,
+            ffiles: stat.ffiles,
+            afiles: stat.afiles,
+            invarsec: stat.invarsec,
         }
     }
 }

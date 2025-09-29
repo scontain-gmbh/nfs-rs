@@ -118,7 +118,7 @@ mod nfs4p1;
 mod rpc;
 mod shared;
 
-pub use mount::{Attr, Mount, NFSVersion, ObjRes, Pathconf, ReaddirEntry, ReaddirplusEntry};
+pub use mount::{Attr, FSInfo, FSStat, Mount, NFSVersion, ObjRes, Pathconf, ReaddirEntry, ReaddirplusEntry};
 pub use shared::Time;
 pub use std::io::Error;
 

@@ -159,6 +159,28 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     // TODO: code doc example for DELEGRETURN procedure
     fn delegreturn(&self, stateid: u64) -> Result<()>; // FIXME: correct params + return type
 
+    /// Procedure FSINFO retrieves non-volatile file system state information.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// fn get_max_filesize(mount: &dyn nfs_rs::Mount) -> std::io::Result<u64> {
+    ///     mount.fsinfo().map(|info| info.maxfilesize)
+    /// }
+    /// ```
+    fn fsinfo(&self) -> Result<FSInfo>;
+
+    /// Procedure FSSTAT retrieves volatile file system state information.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// fn has_space_for_files(mount: &dyn nfs_rs::Mount, num_files: u64, num_bytes: u64) -> std::io::Result<bool> {
+    ///     mount.fsstat().map(|fsstats| fsstats.ffiles >= num_files && fsstats.fbytes >= num_bytes)
+    /// }
+    /// ```
+    fn fsstat(&self) -> Result<FSStat>;
+
     /// Procedure GETATTR retrieves the attributes for a specified file system object.
     ///
     /// # Example
@@ -738,6 +760,35 @@ pub struct Attr {
     pub atime: Time,
     pub mtime: Time,
     pub ctime: Time,
+}
+
+/// Struct describing non-volatile file system state information.
+#[derive(Debug, Default, PartialEq)]
+pub struct FSInfo {
+    pub attr: Option<Attr>,
+    pub rtmax: u32,
+    pub rtpref: u32,
+    pub rtmult: u32,
+    pub wtmax: u32,
+    pub wtpref: u32,
+    pub wtmult: u32,
+    pub dtpref: u32,
+    pub maxfilesize: u64,
+    pub time_delta: Time,
+    pub properties: u32,
+}
+
+/// Struct describing volatile file system state information.
+#[derive(Debug, Default, PartialEq)]
+pub struct FSStat {
+    pub attr: Option<Attr>,
+    pub tbytes: u64,
+    pub fbytes: u64,
+    pub abytes: u64,
+    pub tfiles: u64,
+    pub ffiles: u64,
+    pub afiles: u64,
+    pub invarsec: u32,
 }
 
 /// Struct describing an NFS entry response as returned by various procedures.

@@ -35,6 +35,33 @@ interface nfs {
         attr: option<attr>,
     }
 
+    /// Static file system info
+    record fs-info {
+        attr: option<attr>,
+        rtmax: u32,
+        rtpref: u32,
+        rtmult: u32,
+        wtmax: u32,
+        wtpref: u32,
+        wtmult: u32,
+        dtpref: u32,
+        maxfilesize: u64,
+        time-delta: time,
+        properties: u32,
+    }
+
+    /// Dynamic file system stats
+    record fs-stat {
+        attr: option<attr>,
+        tbytes: u64,
+        fbytes: u64,
+        abytes: u64,
+        tfiles: u64,
+        ffiles: u64,
+        afiles: u64,
+        invarsec: u32,
+   }
+
     /// Path configuration
     record path-conf {
         attr: option<attr>,
@@ -154,6 +181,16 @@ interface nfs {
         ///
         /// Procedure DELEGRETURN returns the delegation represented by the current filehandle and stateid.
         delegreturn: func(stateid: u64) -> result<_, error>;
+
+        /// FSINFO procedure
+        ///
+        /// Procedure FSINFO retrieves non-volatile file system state information.
+        fsinfo: func() -> result<fs-info, error>;
+
+        /// FSSTAT procedure
+        ///
+        /// Procedure FSSTAT retrieves volatile file system state information.
+        fsstat: func() -> result<fs-stat, error>;
 
         /// GETATTR procedure
         ///

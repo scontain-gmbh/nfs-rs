@@ -20,8 +20,21 @@ use std::sync::{Arc, RwLock};
 
 use nfs4::{
     FileAttributeId::{
+        CanSetTime as FileAttributeIdCanSetTime,
+        Homogeneous as FileAttributeIdHomogeneous,
+        LinkSupport as FileAttributeIdLinkSupport,
+        SymlinkSupport as FileAttributeIdSymlinkSupport,
+        SpaceTotal as FileAttributeIdSpaceTotal,
+        SpaceFree as FileAttributeIdSpaceFree,
+        SpaceAvail as FileAttributeIdSpaceAvail,
+        FilesTotal as FileAttributeIdFilesTotal,
+        FilesFree as FileAttributeIdFilesFree,
+        FilesAvail as FileAttributeIdFilesAvail,
+        MaxFileSize as FileAttributeIdMaxFileSize,
         MaxLink as FileAttributeIdMaxLink,
         MaxName as FileAttributeIdMaxName,
+        MaxRead as FileAttributeIdMaxRead,
+        MaxWrite as FileAttributeIdMaxWrite,
         NoTrunc as FileAttributeIdNoTrunc,
         ChownRestricted as FileAttributeIdChownRestricted,
         CaseInsensitive as FileAttributeIdCaseInsensitive,
@@ -40,10 +53,24 @@ use nfs4::{
         TimeAccess as FileAttributeIdTimeAccess,
         TimeModify as FileAttributeIdTimeModify,
         TimeCreate as FileAttributeIdTimeCreate,
+        TimeDelta as FileAttributeIdTimeDelta,
     },
     FileAttribute::{
+        CanSetTime as FileAttributeCanSetTime,
+        Homogeneous as FileAttributeHomogeneous,
+        LinkSupport as FileAttributeLinkSupport,
+        SymlinkSupport as FileAttributeSymlinkSupport,
+        SpaceTotal as FileAttributeSpaceTotal,
+        SpaceFree as FileAttributeSpaceFree,
+        SpaceAvail as FileAttributeSpaceAvail,
+        FilesTotal as FileAttributeFilesTotal,
+        FilesFree as FileAttributeFilesFree,
+        FilesAvail as FileAttributeFilesAvail,
+        MaxFileSize as FileAttributeMaxFileSize,
         MaxLink as FileAttributeMaxLink,
         MaxName as FileAttributeMaxName,
+        MaxRead as FileAttributeMaxRead,
+        MaxWrite as FileAttributeMaxWrite,
         NoTrunc as FileAttributeNoTrunc,
         ChownRestricted as FileAttributeChownRestricted,
         CaseInsensitive as FileAttributeCaseInsensitive,
@@ -64,6 +91,7 @@ use nfs4::{
         TimeModify as FileAttributeTimeModify,
         TimeModifySet as FileAttributeTimeModifySet,
         TimeCreate as FileAttributeTimeCreate,
+        TimeDelta as FileAttributeTimeDelta,
     },
     FileAttributes,
     Mode as FileMode,
@@ -75,6 +103,10 @@ use crate::{
 };
 
 const ROOT_PATH: &str = "/";
+const FSF_LINK: u32 = 0x0001;        // File system supports hard links
+const FSF_SYMLINK: u32 = 0x0002;     // File system supports symbolic links
+const FSF_HOMOGENEOUS: u32 = 0x0008; // File system objects all return same pathconf
+const FSF_CANSETTIME: u32 = 0x0010;  // File system supports setting times via setattr
 
 macro_rules! get_value_from_file_attributes {
     ($file_attributes:ident, $attr_id:ident, $attr_type:ident, $from_value:ident) => {
@@ -121,6 +153,71 @@ impl Into<crate::mount::Pathconf> for nfs4::FileAttributes {
             chown_restricted: get_value_from_file_attributes!(self, FileAttributeIdChownRestricted, FileAttributeChownRestricted, from_ref),
             case_insensitive: get_value_from_file_attributes!(self, FileAttributeIdCaseInsensitive, FileAttributeCaseInsensitive, from_ref),
             case_preserving: get_value_from_file_attributes!(self, FileAttributeIdCasePreserving, FileAttributeCasePreserving, from_ref),
+            attr: Some(self.into()),
+        }
+    }
+}
+
+impl Into<crate::mount::FSInfo> for nfs4::GetAttrRes {
+    fn into(self) -> crate::mount::FSInfo {
+        self.object_attributes.into()
+    }
+}
+
+impl Into<crate::mount::FSInfo> for nfs4::FileAttributes {
+    fn into(self) -> crate::mount::FSInfo {
+        let max_read: u64 = get_value_from_file_attributes!(self, FileAttributeIdMaxRead, FileAttributeMaxRead, from_ref);
+        let max_write: u64 = get_value_from_file_attributes!(self, FileAttributeIdMaxWrite, FileAttributeMaxWrite, from_ref);
+        let link_support: bool = get_value_from_file_attributes!(self, FileAttributeIdLinkSupport, FileAttributeLinkSupport, from_ref);
+        let symlink_support: bool = get_value_from_file_attributes!(self, FileAttributeIdSymlinkSupport, FileAttributeSymlinkSupport, from_ref);
+        let homogeneous: bool = get_value_from_file_attributes!(self, FileAttributeIdHomogeneous, FileAttributeHomogeneous, from_ref);
+        let can_set_time: bool = get_value_from_file_attributes!(self, FileAttributeIdCanSetTime, FileAttributeCanSetTime, from_ref);
+        let mut properties = 0;
+        if link_support {
+            properties = properties | FSF_LINK;
+        }
+        if symlink_support {
+            properties = properties | FSF_SYMLINK;
+        }
+        if homogeneous {
+            properties = properties | FSF_HOMOGENEOUS;
+        }
+        if can_set_time {
+            properties = properties | FSF_CANSETTIME;
+        }
+        crate::mount::FSInfo {
+            rtmax: max_read as u32,
+            rtpref: max_read as u32,
+            rtmult: max_read as u32,
+            wtmax: max_write as u32,
+            wtpref: max_write as u32,
+            wtmult: max_write as u32,
+            dtpref: 1000, // FIXME: magic number taken from nfs4_client::Client::read_dir where value is hardcoded
+            maxfilesize: get_value_from_file_attributes!(self, FileAttributeIdMaxFileSize, FileAttributeMaxFileSize, from_ref),
+            time_delta: get_value_from_file_attributes!(self, FileAttributeIdTimeDelta, FileAttributeTimeDelta, from_time),
+            properties,
+            attr: Some(self.into()),
+        }
+    }
+}
+
+impl Into<crate::mount::FSStat> for nfs4::GetAttrRes {
+    fn into(self) -> crate::mount::FSStat {
+        self.object_attributes.into()
+    }
+}
+
+impl Into<crate::mount::FSStat> for nfs4::FileAttributes {
+    fn into(self) -> crate::mount::FSStat {
+        let invarsec: u32 = 0; // FIXME: don't know if any file attribute matches NFSv3's invarsec (number of seconds for which the file system is not expected to change)
+        crate::mount::FSStat {
+            tbytes: get_value_from_file_attributes!(self, FileAttributeIdSpaceTotal, FileAttributeSpaceTotal, from_ref),
+            fbytes: get_value_from_file_attributes!(self, FileAttributeIdSpaceFree, FileAttributeSpaceFree, from_ref),
+            abytes: get_value_from_file_attributes!(self, FileAttributeIdSpaceAvail, FileAttributeSpaceAvail, from_ref),
+            tfiles: get_value_from_file_attributes!(self, FileAttributeIdFilesTotal, FileAttributeFilesTotal, from_ref),
+            ffiles: get_value_from_file_attributes!(self, FileAttributeIdFilesFree, FileAttributeFilesFree, from_ref),
+            afiles: get_value_from_file_attributes!(self, FileAttributeIdFilesAvail, FileAttributeFilesAvail, from_ref),
+            invarsec,
             attr: Some(self.into()),
         }
     }
@@ -389,6 +486,20 @@ impl crate::Mount for Mount4p1 {
 
     fn delegreturn(&self, _stateid: u64) -> Result<()> {
         unimplemented!("delegreturn")
+    }
+
+    fn fsinfo(&self) -> Result<crate::mount::FSInfo> {
+        let mut client = self.client.write().unwrap();
+        client.get_attr(nfs4::FileHandle(self.root_fh.to_vec()))
+            .map(Into::into)
+            .map_err(into_error)
+    }
+
+    fn fsstat(&self) -> Result<crate::mount::FSStat> {
+        let mut client = self.client.write().unwrap();
+        client.get_attr(nfs4::FileHandle(self.root_fh.to_vec()))
+            .map(Into::into)
+            .map_err(into_error)
     }
 
     fn getattr(&self, fh: &Vec<u8>) -> Result<crate::mount::Attr> {

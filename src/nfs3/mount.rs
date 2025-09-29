@@ -100,6 +100,14 @@ impl crate::Mount for Mount3 {
         Err(Error::new(ErrorKind::Unsupported, "not supported"))
     }
 
+    fn fsinfo(&self) -> Result<crate::mount::FSInfo> {
+        self.m.fsinfo().map(Into::into)
+    }
+
+    fn fsstat(&self) -> Result<crate::mount::FSStat> {
+        self.m.fsstat().map(Into::into)
+    }
+
     fn getattr(&self, fh: &Vec<u8>) -> Result<crate::mount::Attr> {
         self.m.getattr(fh).map(Into::into)
     }

@@ -15,14 +15,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::bindings::exports::component::nfs_rs::nfs::{
-    Attr as WitAttr, Bytes as WitBytes, Error as WitError, Fh as WitFH, Guest as WitNFS,
-    GuestNfsMount as WitMount, NfsMount as WitNFSMount, NfsVersion as WitNFSVersion,
-    ObjRes as WitObjRes, PathConf as WitPathconf, ReaddirEntry as WitReaddirEntry,
-    ReaddirplusEntry as WitReaddirplusEntry, Time as WitTime,
+    Attr as WitAttr, Bytes as WitBytes, Error as WitError, Fh as WitFH, FsInfo as WitFSInfo,
+    FsStat as WitFSStat, Guest as WitNFS, GuestNfsMount as WitMount, NfsMount as WitNFSMount,
+    NfsVersion as WitNFSVersion, ObjRes as WitObjRes, PathConf as WitPathconf,
+    ReaddirEntry as WitReaddirEntry, ReaddirplusEntry as WitReaddirplusEntry, Time as WitTime,
 };
 use crate::{
-    parse_url_and_mount, Attr, Error, Mount, NFSVersion, ObjRes, Pathconf, ReaddirEntry,
-    ReaddirplusEntry, Time,
+    parse_url_and_mount, Attr, Error, FSInfo, FSStat, Mount, NFSVersion, ObjRes, Pathconf,
+    ReaddirEntry, ReaddirplusEntry, Time,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, RwLock};
@@ -123,6 +123,39 @@ impl From<ObjRes> for WitObjRes {
         Self {
             obj: obj.fh,
             attr: obj.attr.map(Into::into),
+        }
+    }
+}
+
+impl From<FSInfo> for WitFSInfo {
+    fn from(info: FSInfo) -> Self {
+        Self {
+            attr: info.attr.map(Into::into),
+            rtmax: info.rtmax,
+            rtpref: info.rtpref,
+            rtmult: info.rtmult,
+            wtmax: info.wtmax,
+            wtpref: info.wtpref,
+            wtmult: info.wtmult,
+            dtpref: info.dtpref,
+            maxfilesize: info.maxfilesize,
+            time_delta: info.time_delta.into(),
+            properties: info.properties,
+        }
+    }
+}
+
+impl From<FSStat> for WitFSStat {
+    fn from(stat: FSStat) -> Self {
+        Self {
+            attr: stat.attr.map(Into::into),
+            tbytes: stat.tbytes,
+            fbytes: stat.fbytes,
+            abytes: stat.abytes,
+            tfiles: stat.tfiles,
+            ffiles: stat.ffiles,
+            afiles: stat.afiles,
+            invarsec: stat.invarsec,
         }
     }
 }
@@ -268,6 +301,18 @@ impl WitMount for crate::NfsMount {
         let mount_guard = get_mount(self.id)?;
         let mount = mount_guard.read().unwrap();
         mount.delegreturn(stateid).map_err(Into::into)
+    }
+
+    fn fsinfo(&self) -> Result<WitFSInfo, WitError> {
+        let mount_guard = get_mount(self.id)?;
+        let mount = mount_guard.read().unwrap();
+        mount.fsinfo().map(Into::into).map_err(Into::into)
+    }
+
+    fn fsstat(&self) -> Result<WitFSStat, WitError> {
+        let mount_guard = get_mount(self.id)?;
+        let mount = mount_guard.read().unwrap();
+        mount.fsstat().map(Into::into).map_err(Into::into)
     }
 
     fn getattr(&self, fh: WitFH) -> Result<WitAttr, WitError> {
