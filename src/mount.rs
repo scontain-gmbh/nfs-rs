@@ -26,7 +26,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn read_chunk(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, offset: u64, size: u32) -> std::io::Result<Vec<u8>> {
+    /// fn read_chunk(mount: &dyn nfs_rs::Mount, fh: &[u8], offset: u64, size: u32) -> std::io::Result<Vec<u8>> {
     ///     let chunk_size = mount.get_max_read_size().min(size);
     ///     mount.read(fh, offset, chunk_size)
     /// }
@@ -38,7 +38,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn write_chunk(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, offset: u64, data: &Vec<u8>, size: u32) -> std::io::Result<u32> {
+    /// fn write_chunk(mount: &dyn nfs_rs::Mount, fh: &[u8], offset: u64, data: &[u8], size: u32) -> std::io::Result<u32> {
     ///     let chunk_size = mount.get_max_write_size().min(size) as usize;
     ///     let data = data[0..chunk_size].to_vec();
     ///     mount.write(fh, offset, &data)
@@ -63,11 +63,11 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn check_access(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, mode: u32) -> std::io::Result<bool> {
+    /// fn check_access(mount: &dyn nfs_rs::Mount, fh: &[u8], mode: u32) -> std::io::Result<bool> {
     ///     mount.access(fh, mode).map(|access| mode == access)
     /// }
     /// ```
-    fn access(&self, fh: &Vec<u8>, mode: u32) -> Result<u32>;
+    fn access(&self, fh: &[u8], mode: u32) -> Result<u32>;
 
     /// Same as [`Mount::access`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -92,12 +92,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn write_and_flush(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, offset: u64, data: &Vec<u8>) -> std::io::Result<()> {
+    /// fn write_and_flush(mount: &dyn nfs_rs::Mount, fh: &[u8], offset: u64, data: &[u8]) -> std::io::Result<()> {
     ///     let count = mount.write(fh, offset, data)?;
     ///     mount.commit(fh, offset, count as u32) // safe since `write` returns error if data.len() > u32::MAX
     /// }
     /// ```
-    fn commit(&self, fh: &Vec<u8>, offset: u64, count: u32) -> Result<()>;
+    fn commit(&self, fh: &[u8], offset: u64, count: u32) -> Result<()>;
 
     /// Same as [`Mount::commit`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -105,7 +105,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn write_to_path_and_flush(mount: &dyn nfs_rs::Mount, path: &str, offset: u64, data: &Vec<u8>) -> std::io::Result<()> {
+    /// fn write_to_path_and_flush(mount: &dyn nfs_rs::Mount, path: &str, offset: u64, data: &[u8]) -> std::io::Result<()> {
     ///     let count = mount.write_path(path, offset, data)?;
     ///     mount.commit_path(path, offset, count as u32) // safe since `write` returns error if data.len() > u32::MAX
     /// }
@@ -117,19 +117,19 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Examples
     ///
     /// ```
-    /// fn create_txt(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>, name: &str) -> std::io::Result<nfs_rs::ObjRes> {
+    /// fn create_txt(mount: &dyn nfs_rs::Mount, dir_fh: &[u8], name: &str) -> std::io::Result<nfs_rs::ObjRes> {
     ///     let mode = 0o640;
     ///     let filename = format!("{}.txt", name);
     ///     mount.create(dir_fh, &filename, mode)
     /// }
     ///
-    /// fn create_sh(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>, name: &str) -> std::io::Result<nfs_rs::ObjRes> {
+    /// fn create_sh(mount: &dyn nfs_rs::Mount, dir_fh: &[u8], name: &str) -> std::io::Result<nfs_rs::ObjRes> {
     ///     let mode = 0o750;
     ///     let filename = format!("{}.sh", name);
     ///     mount.create(dir_fh, &filename, mode)
     /// }
     /// ```
-    fn create(&self, dir_fh: &Vec<u8>, filename: &str, mode: u32) -> Result<ObjRes>;
+    fn create(&self, dir_fh: &[u8], filename: &str, mode: u32) -> Result<ObjRes>;
 
     /// Same as [`Mount::create`] but instead of taking in directory file handle and filename, takes in a path for
     /// which directory file handle is obtained by performing one or more LOOKUP procedures.
@@ -186,11 +186,11 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn has_changed_since(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, time: &nfs_rs::Time) -> std::io::Result<bool> {
+    /// fn has_changed_since(mount: &dyn nfs_rs::Mount, fh: &[u8], time: &nfs_rs::Time) -> std::io::Result<bool> {
     ///     mount.getattr(fh).map(|attr| attr.mtime.seconds != time.seconds || attr.mtime.nseconds != time.nseconds)
     /// }
     /// ```
-    fn getattr(&self, fh: &Vec<u8>) -> Result<Attr>;
+    fn getattr(&self, fh: &[u8]) -> Result<Attr>;
 
     /// Same as [`Mount::getattr`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -209,26 +209,27 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Examples
     ///
     /// ```
-    /// fn chmod(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, mode: u32, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
+    /// fn chmod(mount: &dyn nfs_rs::Mount, fh: &[u8], mode: u32, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
     ///     mount.setattr(fh, guard, Some(mode), None, None, None, None, None)
     /// }
     ///
-    /// fn chown(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, uid: u32, gid: u32, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
+    /// fn chown(mount: &dyn nfs_rs::Mount, fh: &[u8], uid: u32, gid: u32, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
     ///     mount.setattr(fh, guard, None, Some(uid), Some(gid), None, None, None)
     /// }
     ///
-    /// fn truncate(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, size: u64, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
+    /// fn truncate(mount: &dyn nfs_rs::Mount, fh: &[u8], size: u64, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
     ///     mount.setattr(fh, guard, None, None, None, Some(size), None, None)
     /// }
     ///
-    /// fn touch(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, now: nfs_rs::Time, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
+    /// fn touch(mount: &dyn nfs_rs::Mount, fh: &[u8], now: nfs_rs::Time, guard: Option<nfs_rs::Time>) -> std::io::Result<()> {
     ///     let now_clone = now.clone();
     ///     mount.setattr(fh, guard, None, None, None, None, Some(now), Some(now_clone))
     /// }
     /// ```
+    #[allow(clippy::too_many_arguments)]
     fn setattr(
         &self,
-        fh: &Vec<u8>,
+        fh: &[u8],
         guard_ctime: Option<Time>,
         mode: Option<u32>,
         uid: Option<u32>,
@@ -262,6 +263,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     ///     mount.setattr_path(path, guard, None, None, None, None, Some(now), Some(now_clone))
     /// }
     /// ```
+    #[allow(clippy::too_many_arguments)]
     fn setattr_path(
         &self,
         path: &str,
@@ -283,12 +285,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn create_link(mount: &dyn nfs_rs::Mount, src_fh: &Vec<u8>, dst_dir_fh: &Vec<u8>, dst_filename: &str) -> std::io::Result<nfs_rs::Attr> {
+    /// fn create_link(mount: &dyn nfs_rs::Mount, src_fh: &[u8], dst_dir_fh: &[u8], dst_filename: &str) -> std::io::Result<nfs_rs::Attr> {
     ///     mount.link(src_fh, dst_dir_fh, dst_filename)
     /// }
     /// ```
     // FIXME: better code doc example? (example function is redundant -- could just call mount.link directly)
-    fn link(&self, src_fh: &Vec<u8>, dst_dir_fh: &Vec<u8>, dst_filename: &str) -> Result<Attr>;
+    fn link(&self, src_fh: &[u8], dst_dir_fh: &[u8], dst_filename: &str) -> Result<Attr>;
 
     /// Same as [`Mount::link`] but instead of taking in a source file handle, destination directory file handle,
     /// and destination filename, takes in a source path for which file handle is obtained by performing one or more
@@ -310,12 +312,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn create_symlink(mount: &dyn nfs_rs::Mount, src_path: &str, dst_dir_fh: &Vec<u8>, dst_filename: &str) -> std::io::Result<nfs_rs::ObjRes> {
+    /// fn create_symlink(mount: &dyn nfs_rs::Mount, src_path: &str, dst_dir_fh: &[u8], dst_filename: &str) -> std::io::Result<nfs_rs::ObjRes> {
     ///     mount.symlink(src_path, dst_dir_fh, dst_filename)
     /// }
     /// ```
     // FIXME: better code doc example? (example function is redundant -- could just call mount.symlink directly)
-    fn symlink(&self, src_path: &str, dst_dir_fh: &Vec<u8>, dst_filename: &str) -> Result<ObjRes>;
+    fn symlink(&self, src_path: &str, dst_dir_fh: &[u8], dst_filename: &str) -> Result<ObjRes>;
 
     /// Same as [`Mount::symlink`] but instead of taking in a destination directory file handle and destination
     /// filename, takes in a  destination path for which directory file handle is obtained by performing one or more
@@ -336,12 +338,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn get_symlink_src_path(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>) -> std::io::Result<String> {
+    /// fn get_symlink_src_path(mount: &dyn nfs_rs::Mount, fh: &[u8]) -> std::io::Result<String> {
     ///     mount.readlink(fh)
     /// }
     /// ```
     // FIXME: better code doc example? (example function is redundant -- could just call mount.readlink directly)
-    fn readlink(&self, fh: &Vec<u8>) -> Result<String>;
+    fn readlink(&self, fh: &[u8]) -> Result<String>;
 
     /// Same as [`Mount::readlink`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -362,12 +364,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn is_directory(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>, filename: &str) -> std::io::Result<bool> {
+    /// fn is_directory(mount: &dyn nfs_rs::Mount, dir_fh: &[u8], filename: &str) -> std::io::Result<bool> {
     ///     const TYPE_DIR: u32 = 2;
     ///     mount.lookup(dir_fh, filename).map(|res| res.attr.map_or(false, |attr| attr.type_ == TYPE_DIR))
     /// }
     /// ```
-    fn lookup(&self, dir_fh: &Vec<u8>, filename: &str) -> Result<ObjRes>;
+    fn lookup(&self, dir_fh: &[u8], filename: &str) -> Result<ObjRes>;
 
     /// Same as [`Mount::lookup`] but instead of taking in a directory file handle and filename, takes in a path for
     /// which directory file handle is obtained by performing one or more LOOKUP procedures for each directory in the
@@ -388,11 +390,11 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn chown_allowed(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>) -> std::io::Result<bool> {
+    /// fn chown_allowed(mount: &dyn nfs_rs::Mount, fh: &[u8]) -> std::io::Result<bool> {
     ///     mount.pathconf(fh).map(|conf| !conf.chown_restricted)
     /// }
     /// ```
-    fn pathconf(&self, fh: &Vec<u8>) -> Result<Pathconf>;
+    fn pathconf(&self, fh: &[u8]) -> Result<Pathconf>;
 
     /// Same as [`Mount::pathconf`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -411,7 +413,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn read_exact(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, mut offset: u64, mut count: u32) -> std::io::Result<Vec<u8>> {
+    /// fn read_exact(mount: &dyn nfs_rs::Mount, fh: &[u8], mut offset: u64, mut count: u32) -> std::io::Result<Vec<u8>> {
     ///     let mut ret = Vec::new();
     ///     loop {
     ///         let mut chunk = mount.read(fh, offset, count)?;
@@ -425,7 +427,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     ///     }
     /// }
     /// ```
-    fn read(&self, fh: &Vec<u8>, offset: u64, count: u32) -> Result<Vec<u8>>;
+    fn read(&self, fh: &[u8], offset: u64, count: u32) -> Result<Vec<u8>>;
 
     /// Same as [`Mount::read`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -454,7 +456,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn write_all(mount: &dyn nfs_rs::Mount, fh: &Vec<u8>, mut offset: u64, mut data: Vec<u8>) -> std::io::Result<()> {
+    /// fn write_all(mount: &dyn nfs_rs::Mount, fh: &[u8], mut offset: u64, mut data: Vec<u8>) -> std::io::Result<()> {
     ///     loop {
     ///         let written_bytes = mount.write(fh, offset, &data)? as usize;
     ///         data.drain(0..written_bytes);
@@ -464,7 +466,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     ///     }
     /// }
     /// ```
-    fn write(&self, fh: &Vec<u8>, offset: u64, data: &Vec<u8>) -> Result<u32>;
+    fn write(&self, fh: &[u8], offset: u64, data: &[u8]) -> Result<u32>;
 
     /// Same as [`Mount::write`] but instead of taking in a file handle, takes in a path for which file handle is
     /// obtained by performing one or more LOOKUP procedures.
@@ -482,7 +484,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     ///     }
     /// }
     /// ```
-    fn write_path(&self, path: &str, offset: u64, data: &Vec<u8>) -> Result<u32>;
+    fn write_path(&self, path: &str, offset: u64, data: &[u8]) -> Result<u32>;
 
     /// Procedure READDIR retrieves a variable number of entries, in sequence, from a directory and returns the name
     /// and file identifier for each, with information to allow the client to request additional directory entries in
@@ -491,14 +493,14 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn list_entries(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>) -> std::io::Result<()> {
+    /// fn list_entries(mount: &dyn nfs_rs::Mount, dir_fh: &[u8]) -> std::io::Result<()> {
     ///     for entry in mount.readdir(dir_fh)? {
     ///         println!("{}", entry.file_name);
     ///     }
     ///     Ok(())
     /// }
     /// ```
-    fn readdir(&self, dir_fh: &Vec<u8>) -> Result<Vec<ReaddirEntry>>;
+    fn readdir(&self, dir_fh: &[u8]) -> Result<Vec<ReaddirEntry>>;
 
     /// Same as [`Mount::readdir`] but instead of taking in a directory file handle, takes in a path for which
     /// directory file handle is obtained by performing one or more LOOKUP procedures.
@@ -524,7 +526,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn list_detailed_entries(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>) -> std::io::Result<()> {
+    /// fn list_detailed_entries(mount: &dyn nfs_rs::Mount, dir_fh: &[u8]) -> std::io::Result<()> {
     ///     println!("{:>5} {:>25} {}", "mode", "size", "name");
     ///     for entry in mount.readdirplus(dir_fh)? {
     ///         let (mode, size) = entry.attr.map_or((String::new(), String::new()), |attr| {
@@ -538,7 +540,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     ///     Ok(())
     /// }
     /// ```
-    fn readdirplus(&self, dir_fh: &Vec<u8>) -> Result<Vec<ReaddirplusEntry>>;
+    fn readdirplus(&self, dir_fh: &[u8]) -> Result<Vec<ReaddirplusEntry>>;
 
     /// Same as [`Mount::readdirplus`] but instead of taking in a directory file handle, takes in a path for which
     /// directory file handle is obtained by performing one or more LOOKUP procedures.
@@ -567,7 +569,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn ensure_directory_exists(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>, dirname: &str) -> std::io::Result<()> {
+    /// fn ensure_directory_exists(mount: &dyn nfs_rs::Mount, dir_fh: &[u8], dirname: &str) -> std::io::Result<()> {
     ///     let mode = 0o750;
     ///     let res = mount.mkdir(dir_fh, dirname, mode);
     ///     if res.is_err() {
@@ -579,7 +581,7 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     ///     Ok(())
     /// }
     /// ```
-    fn mkdir(&self, dir_fh: &Vec<u8>, dirname: &str, mode: u32) -> Result<ObjRes>;
+    fn mkdir(&self, dir_fh: &[u8], dirname: &str, mode: u32) -> Result<ObjRes>;
 
     /// Same as [`Mount::mkdir`] but instead of taking in directory file handle and dirname, takes in a path for which
     /// directory file handle is obtained by performing one or more LOOKUP procedures.
@@ -606,12 +608,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn delete_file(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>, filename: &str) -> std::io::Result<()> {
+    /// fn delete_file(mount: &dyn nfs_rs::Mount, dir_fh: &[u8], filename: &str) -> std::io::Result<()> {
     ///     mount.remove(dir_fh, filename)
     /// }
     /// ```
     // FIXME: better code doc example? (example function is redundant -- could just call mount.remove directly)
-    fn remove(&self, dir_fh: &Vec<u8>, filename: &str) -> Result<()>;
+    fn remove(&self, dir_fh: &[u8], filename: &str) -> Result<()>;
 
     /// Same as [`Mount::remove`] but instead of taking in a directory file handle and filename, takes in a path for
     /// which directory file handle is obtained by performing one or more LOOKUP procedures.
@@ -631,12 +633,12 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// # Example
     ///
     /// ```
-    /// fn delete_directory(mount: &dyn nfs_rs::Mount, dir_fh: &Vec<u8>, dirname: &str) -> std::io::Result<()> {
+    /// fn delete_directory(mount: &dyn nfs_rs::Mount, dir_fh: &[u8], dirname: &str) -> std::io::Result<()> {
     ///     mount.rmdir(dir_fh, dirname)
     /// }
     /// ```
     // FIXME: better code doc example? (example function is redundant -- could just call mount.rmdir directly)
-    fn rmdir(&self, dir_fh: &Vec<u8>, dirname: &str) -> Result<()>;
+    fn rmdir(&self, dir_fh: &[u8], dirname: &str) -> Result<()>;
 
     /// Same as [`Mount::rmdir`] but instead of taking in a directory file handle and directory name, takes in a path
     /// for which directory file handle is obtained by performing one or more LOOKUP procedures.
@@ -658,9 +660,9 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     /// ```
     /// fn mv(
     ///     mount: &dyn nfs_rs::Mount,
-    ///     from_dir_fh: &Vec<u8>,
+    ///     from_dir_fh: &[u8],
     ///     from_filename: &str,
-    ///     to_dir_fh: &Vec<u8>,
+    ///     to_dir_fh: &[u8],
     ///     to_filename: &str,
     /// ) -> std::io::Result<()> {
     ///     mount.rename(from_dir_fh, from_filename, to_dir_fh, to_filename)
@@ -669,9 +671,9 @@ pub trait Mount: std::fmt::Debug + Send + Sync {
     // FIXME: better code doc example? (example function is redundant -- could just call mount.rename directly)
     fn rename(
         &self,
-        from_dir_fh: &Vec<u8>,
+        from_dir_fh: &[u8],
         from_filename: &str,
-        to_dir_fh: &Vec<u8>,
+        to_dir_fh: &[u8],
         to_filename: &str,
     ) -> Result<()>;
 
@@ -732,9 +734,9 @@ pub enum NFSVersion {
     NFSv4p2,
 }
 
-impl Into<NFSVersion> for &str {
-    fn into(self) -> NFSVersion {
-        match self {
+impl From<&str> for NFSVersion {
+    fn from(val: &str) -> Self {
+        match val {
             "3" => NFSVersion::NFSv3,
             "4" => NFSVersion::NFSv4,
             "4.1" => NFSVersion::NFSv4p1,
@@ -744,8 +746,20 @@ impl Into<NFSVersion> for &str {
     }
 }
 
+impl std::fmt::Display for NFSVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NFSVersion::NFSv3 => write!(f, "NFSv3"),
+            NFSVersion::NFSv4 => write!(f, "NFSv4"),
+            NFSVersion::NFSv4p1 => write!(f, "NFSv4.1"),
+            NFSVersion::NFSv4p2 => write!(f, "NFSv4.2"),
+            NFSVersion::Unknown => write!(f, "NFS: Unknown version"),
+        }
+    }
+}
+
 /// Struct describing attributes for an NFS entry.
-#[derive(Debug, Default, PartialEq)]
+#[derive(Debug, Default, PartialEq, Clone)]
 pub struct Attr {
     pub type_: u32,
     pub file_mode: u32,
@@ -763,7 +777,9 @@ pub struct Attr {
 }
 
 /// Struct describing non-volatile file system state information.
+
 #[derive(Debug, Default, PartialEq)]
+
 pub struct FSInfo {
     pub attr: Option<Attr>,
     pub rtmax: u32,
@@ -779,7 +795,9 @@ pub struct FSInfo {
 }
 
 /// Struct describing volatile file system state information.
+
 #[derive(Debug, Default, PartialEq)]
+
 pub struct FSStat {
     pub attr: Option<Attr>,
     pub tbytes: u64,

@@ -17,96 +17,62 @@
 use std::io;
 use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use nfs4::{
-    FileAttributeId::{
-        CanSetTime as FileAttributeIdCanSetTime,
-        Homogeneous as FileAttributeIdHomogeneous,
-        LinkSupport as FileAttributeIdLinkSupport,
-        SymlinkSupport as FileAttributeIdSymlinkSupport,
-        SpaceTotal as FileAttributeIdSpaceTotal,
-        SpaceFree as FileAttributeIdSpaceFree,
-        SpaceAvail as FileAttributeIdSpaceAvail,
-        FilesTotal as FileAttributeIdFilesTotal,
-        FilesFree as FileAttributeIdFilesFree,
-        FilesAvail as FileAttributeIdFilesAvail,
-        MaxFileSize as FileAttributeIdMaxFileSize,
-        MaxLink as FileAttributeIdMaxLink,
-        MaxName as FileAttributeIdMaxName,
-        MaxRead as FileAttributeIdMaxRead,
-        MaxWrite as FileAttributeIdMaxWrite,
-        NoTrunc as FileAttributeIdNoTrunc,
-        ChownRestricted as FileAttributeIdChownRestricted,
-        CaseInsensitive as FileAttributeIdCaseInsensitive,
-        CasePreserving as FileAttributeIdCasePreserving,
-        Type as FileAttributeIdFileType,
-        Mode as FileAttributeIdFileMode,
-        NumLinks as FileAttributeIdNumLinks,
-        Owner as FileAttributeIdOwner,
-        OwnerGroup as FileAttributeIdOwnerGroup,
-        Size as FileAttributeIdFileSize,
-        SpaceUsed as FileAttributeIdSpaceUsed,
-        RawDev as FileAttributeIdRawDev,
-        FsId as FileAttributeIdFsId,
-        FileId as FileAttributeIdFileId,
-        FileHandle as FileAttributeIdFileHandle,
-        TimeAccess as FileAttributeIdTimeAccess,
-        TimeModify as FileAttributeIdTimeModify,
-        TimeCreate as FileAttributeIdTimeCreate,
-        TimeDelta as FileAttributeIdTimeDelta,
-    },
-    FileAttribute::{
-        CanSetTime as FileAttributeCanSetTime,
-        Homogeneous as FileAttributeHomogeneous,
-        LinkSupport as FileAttributeLinkSupport,
-        SymlinkSupport as FileAttributeSymlinkSupport,
-        SpaceTotal as FileAttributeSpaceTotal,
-        SpaceFree as FileAttributeSpaceFree,
-        SpaceAvail as FileAttributeSpaceAvail,
-        FilesTotal as FileAttributeFilesTotal,
-        FilesFree as FileAttributeFilesFree,
-        FilesAvail as FileAttributeFilesAvail,
-        MaxFileSize as FileAttributeMaxFileSize,
-        MaxLink as FileAttributeMaxLink,
-        MaxName as FileAttributeMaxName,
-        MaxRead as FileAttributeMaxRead,
-        MaxWrite as FileAttributeMaxWrite,
-        NoTrunc as FileAttributeNoTrunc,
-        ChownRestricted as FileAttributeChownRestricted,
-        CaseInsensitive as FileAttributeCaseInsensitive,
-        CasePreserving as FileAttributeCasePreserving,
-        Type as FileAttributeFileType,
-        Mode as FileAttributeFileMode,
-        NumLinks as FileAttributeNumLinks,
-        Owner as FileAttributeOwner,
-        OwnerGroup as FileAttributeOwnerGroup,
-        Size as FileAttributeFileSize,
-        SpaceUsed as FileAttributeSpaceUsed,
-        RawDev as FileAttributeRawDev,
-        FsId as FileAttributeFsId,
-        FileId as FileAttributeFileId,
-        FileHandle as FileAttributeFileHandle,
-        TimeAccess as FileAttributeTimeAccess,
-        TimeAccessSet as FileAttributeTimeAccessSet,
-        TimeModify as FileAttributeTimeModify,
-        TimeModifySet as FileAttributeTimeModifySet,
-        TimeCreate as FileAttributeTimeCreate,
-        TimeDelta as FileAttributeTimeDelta,
-    },
-    FileAttributes,
-    Mode as FileMode,
-    SetTime as FileSetTime,
+use nfs4::FileAttribute::{
+    CanSetTime as FileAttributeCanSetTime, CaseInsensitive as FileAttributeCaseInsensitive,
+    CasePreserving as FileAttributeCasePreserving, ChownRestricted as FileAttributeChownRestricted,
+    FileHandle as FileAttributeFileHandle, FileId as FileAttributeFileId,
+    FilesAvail as FileAttributeFilesAvail, FilesFree as FileAttributeFilesFree,
+    FilesTotal as FileAttributeFilesTotal, FsId as FileAttributeFsId,
+    Homogeneous as FileAttributeHomogeneous, LinkSupport as FileAttributeLinkSupport,
+    MaxFileSize as FileAttributeMaxFileSize, MaxLink as FileAttributeMaxLink,
+    MaxName as FileAttributeMaxName, MaxRead as FileAttributeMaxRead,
+    MaxWrite as FileAttributeMaxWrite, Mode as FileAttributeFileMode,
+    NoTrunc as FileAttributeNoTrunc, NumLinks as FileAttributeNumLinks,
+    Owner as FileAttributeOwner, OwnerGroup as FileAttributeOwnerGroup,
+    RawDev as FileAttributeRawDev, Size as FileAttributeFileSize,
+    SpaceAvail as FileAttributeSpaceAvail, SpaceFree as FileAttributeSpaceFree,
+    SpaceTotal as FileAttributeSpaceTotal, SpaceUsed as FileAttributeSpaceUsed,
+    SymlinkSupport as FileAttributeSymlinkSupport, TimeAccess as FileAttributeTimeAccess,
+    TimeAccessSet as FileAttributeTimeAccessSet, TimeCreate as FileAttributeTimeCreate,
+    TimeDelta as FileAttributeTimeDelta, TimeModify as FileAttributeTimeModify,
+    TimeModifySet as FileAttributeTimeModifySet, Type as FileAttributeFileType,
 };
+use nfs4::FileAttributeId::{
+    CanSetTime as FileAttributeIdCanSetTime, CaseInsensitive as FileAttributeIdCaseInsensitive,
+    CasePreserving as FileAttributeIdCasePreserving,
+    ChownRestricted as FileAttributeIdChownRestricted, FileHandle as FileAttributeIdFileHandle,
+    FileId as FileAttributeIdFileId, FilesAvail as FileAttributeIdFilesAvail,
+    FilesFree as FileAttributeIdFilesFree, FilesTotal as FileAttributeIdFilesTotal,
+    FsId as FileAttributeIdFsId, Homogeneous as FileAttributeIdHomogeneous,
+    LinkSupport as FileAttributeIdLinkSupport, MaxFileSize as FileAttributeIdMaxFileSize,
+    MaxLink as FileAttributeIdMaxLink, MaxName as FileAttributeIdMaxName,
+    MaxRead as FileAttributeIdMaxRead, MaxWrite as FileAttributeIdMaxWrite,
+    Mode as FileAttributeIdFileMode, NoTrunc as FileAttributeIdNoTrunc,
+    NumLinks as FileAttributeIdNumLinks, Owner as FileAttributeIdOwner,
+    OwnerGroup as FileAttributeIdOwnerGroup, RawDev as FileAttributeIdRawDev,
+    Size as FileAttributeIdFileSize, SpaceAvail as FileAttributeIdSpaceAvail,
+    SpaceFree as FileAttributeIdSpaceFree, SpaceTotal as FileAttributeIdSpaceTotal,
+    SpaceUsed as FileAttributeIdSpaceUsed, SymlinkSupport as FileAttributeIdSymlinkSupport,
+    TimeAccess as FileAttributeIdTimeAccess, TimeCreate as FileAttributeIdTimeCreate,
+    TimeDelta as FileAttributeIdTimeDelta, TimeModify as FileAttributeIdTimeModify,
+    Type as FileAttributeIdFileType,
+};
+use nfs4::{FileAttributes, Mode as FileMode, SetTime as FileSetTime};
 
-use crate::{
-    rpc, split_path, Error, NFSVersion, ObjRes, Result, SocketAddr, TcpStream, Time, ToSocketAddrs,
-};
+use crate::{split_path, Error, NFSVersion, ObjRes, Result, SocketAddr, TcpStream, Time};
+use std::net::ToSocketAddrs;
 
 const ROOT_PATH: &str = "/";
-const FSF_LINK: u32 = 0x0001;        // File system supports hard links
-const FSF_SYMLINK: u32 = 0x0002;     // File system supports symbolic links
+
+const FSF_LINK: u32 = 0x0001; // File system supports hard links
+
+const FSF_SYMLINK: u32 = 0x0002; // File system supports symbolic links
+
 const FSF_HOMOGENEOUS: u32 = 0x0008; // File system objects all return same pathconf
-const FSF_CANSETTIME: u32 = 0x0010;  // File system supports setting times via setattr
+
+const FSF_CANSETTIME: u32 = 0x0010; // File system supports setting times via setattr
 
 macro_rules! get_value_from_file_attributes {
     ($file_attributes:ident, $attr_id:ident, $attr_type:ident, $from_value:ident) => {
@@ -114,48 +80,7 @@ macro_rules! get_value_from_file_attributes {
             Some($attr_type(value)) => $from_value(&value),
             _ => Default::default(),
         }
-    }
-}
-
-impl Into<nfs4_client::OpaqueAuth> for &crate::Auth {
-    fn into(self) -> nfs4_client::OpaqueAuth {
-        match self.flavor {
-            crate::AuthFlavor::Null => nfs4_client::OpaqueAuth::none(),
-            crate::AuthFlavor::Unix => nfs4_client::OpaqueAuth::auth_sys(nfs4_client::AuthSysParameters {
-                stamp: 0,
-                machine_name: "nfs-rs".into(),
-                uid: nfs4_client::Uid(self.uid),
-                gid: nfs4_client::Gid(self.gid),
-                gids: Vec::new(),
-            }),
-        }
-    }
-}
-
-impl Into<nfs4::Time> for crate::shared::Time {
-    fn into(self) -> nfs4::Time {
-        nfs4::Time{seconds: self.seconds as i64, nseconds: self.nseconds}
-    }
-}
-
-impl Into<crate::mount::Pathconf> for nfs4::GetAttrRes {
-    fn into(self) -> crate::mount::Pathconf {
-        self.object_attributes.into()
-    }
-}
-
-impl Into<crate::mount::Pathconf> for nfs4::FileAttributes {
-    fn into(self) -> crate::mount::Pathconf {
-        crate::mount::Pathconf {
-            linkmax: get_value_from_file_attributes!(self, FileAttributeIdMaxLink, FileAttributeMaxLink, from_ref),
-            name_max: get_value_from_file_attributes!(self, FileAttributeIdMaxName, FileAttributeMaxName, from_ref),
-            no_trunc: get_value_from_file_attributes!(self, FileAttributeIdNoTrunc, FileAttributeNoTrunc, from_ref),
-            chown_restricted: get_value_from_file_attributes!(self, FileAttributeIdChownRestricted, FileAttributeChownRestricted, from_ref),
-            case_insensitive: get_value_from_file_attributes!(self, FileAttributeIdCaseInsensitive, FileAttributeCaseInsensitive, from_ref),
-            case_preserving: get_value_from_file_attributes!(self, FileAttributeIdCasePreserving, FileAttributeCasePreserving, from_ref),
-            attr: Some(self.into()),
-        }
-    }
+    };
 }
 
 impl Into<crate::mount::FSInfo> for nfs4::GetAttrRes {
@@ -166,36 +91,97 @@ impl Into<crate::mount::FSInfo> for nfs4::GetAttrRes {
 
 impl Into<crate::mount::FSInfo> for nfs4::FileAttributes {
     fn into(self) -> crate::mount::FSInfo {
-        let max_read: u64 = get_value_from_file_attributes!(self, FileAttributeIdMaxRead, FileAttributeMaxRead, from_ref);
-        let max_write: u64 = get_value_from_file_attributes!(self, FileAttributeIdMaxWrite, FileAttributeMaxWrite, from_ref);
-        let link_support: bool = get_value_from_file_attributes!(self, FileAttributeIdLinkSupport, FileAttributeLinkSupport, from_ref);
-        let symlink_support: bool = get_value_from_file_attributes!(self, FileAttributeIdSymlinkSupport, FileAttributeSymlinkSupport, from_ref);
-        let homogeneous: bool = get_value_from_file_attributes!(self, FileAttributeIdHomogeneous, FileAttributeHomogeneous, from_ref);
-        let can_set_time: bool = get_value_from_file_attributes!(self, FileAttributeIdCanSetTime, FileAttributeCanSetTime, from_ref);
+        let max_read: u64 = get_value_from_file_attributes!(
+            self,
+            FileAttributeIdMaxRead,
+            FileAttributeMaxRead,
+            from_ref
+        );
+
+        let max_write: u64 = get_value_from_file_attributes!(
+            self,
+            FileAttributeIdMaxWrite,
+            FileAttributeMaxWrite,
+            from_ref
+        );
+
+        let link_support: bool = get_value_from_file_attributes!(
+            self,
+            FileAttributeIdLinkSupport,
+            FileAttributeLinkSupport,
+            from_ref
+        );
+
+        let symlink_support: bool = get_value_from_file_attributes!(
+            self,
+            FileAttributeIdSymlinkSupport,
+            FileAttributeSymlinkSupport,
+            from_ref
+        );
+
+        let homogeneous: bool = get_value_from_file_attributes!(
+            self,
+            FileAttributeIdHomogeneous,
+            FileAttributeHomogeneous,
+            from_ref
+        );
+
+        let can_set_time: bool = get_value_from_file_attributes!(
+            self,
+            FileAttributeIdCanSetTime,
+            FileAttributeCanSetTime,
+            from_ref
+        );
+
         let mut properties = 0;
+
         if link_support {
             properties = properties | FSF_LINK;
         }
+
         if symlink_support {
             properties = properties | FSF_SYMLINK;
         }
+
         if homogeneous {
             properties = properties | FSF_HOMOGENEOUS;
         }
+
         if can_set_time {
             properties = properties | FSF_CANSETTIME;
         }
+
         crate::mount::FSInfo {
             rtmax: max_read as u32,
+
             rtpref: max_read as u32,
+
             rtmult: max_read as u32,
+
             wtmax: max_write as u32,
+
             wtpref: max_write as u32,
+
             wtmult: max_write as u32,
+
             dtpref: 1000, // FIXME: magic number taken from nfs4_client::Client::read_dir where value is hardcoded
-            maxfilesize: get_value_from_file_attributes!(self, FileAttributeIdMaxFileSize, FileAttributeMaxFileSize, from_ref),
-            time_delta: get_value_from_file_attributes!(self, FileAttributeIdTimeDelta, FileAttributeTimeDelta, from_time),
+
+            maxfilesize: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdMaxFileSize,
+                FileAttributeMaxFileSize,
+                from_ref
+            ),
+
+            time_delta: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdTimeDelta,
+                FileAttributeTimeDelta,
+                from_time
+            ),
+
             properties,
+
             attr: Some(self.into()),
         }
     }
@@ -210,67 +196,250 @@ impl Into<crate::mount::FSStat> for nfs4::GetAttrRes {
 impl Into<crate::mount::FSStat> for nfs4::FileAttributes {
     fn into(self) -> crate::mount::FSStat {
         let invarsec: u32 = 0; // FIXME: don't know if any file attribute matches NFSv3's invarsec (number of seconds for which the file system is not expected to change)
+
         crate::mount::FSStat {
-            tbytes: get_value_from_file_attributes!(self, FileAttributeIdSpaceTotal, FileAttributeSpaceTotal, from_ref),
-            fbytes: get_value_from_file_attributes!(self, FileAttributeIdSpaceFree, FileAttributeSpaceFree, from_ref),
-            abytes: get_value_from_file_attributes!(self, FileAttributeIdSpaceAvail, FileAttributeSpaceAvail, from_ref),
-            tfiles: get_value_from_file_attributes!(self, FileAttributeIdFilesTotal, FileAttributeFilesTotal, from_ref),
-            ffiles: get_value_from_file_attributes!(self, FileAttributeIdFilesFree, FileAttributeFilesFree, from_ref),
-            afiles: get_value_from_file_attributes!(self, FileAttributeIdFilesAvail, FileAttributeFilesAvail, from_ref),
+            tbytes: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdSpaceTotal,
+                FileAttributeSpaceTotal,
+                from_ref
+            ),
+
+            fbytes: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdSpaceFree,
+                FileAttributeSpaceFree,
+                from_ref
+            ),
+
+            abytes: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdSpaceAvail,
+                FileAttributeSpaceAvail,
+                from_ref
+            ),
+
+            tfiles: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdFilesTotal,
+                FileAttributeFilesTotal,
+                from_ref
+            ),
+
+            ffiles: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdFilesFree,
+                FileAttributeFilesFree,
+                from_ref
+            ),
+
+            afiles: get_value_from_file_attributes!(
+                self,
+                FileAttributeIdFilesAvail,
+                FileAttributeFilesAvail,
+                from_ref
+            ),
+
             invarsec,
+
             attr: Some(self.into()),
         }
     }
 }
 
-impl Into<crate::mount::Attr> for nfs4::GetAttrRes {
-    fn into(self) -> crate::mount::Attr {
-        self.object_attributes.into()
-    }
-}
-
-impl Into<crate::mount::Attr> for nfs4::FileAttributes {
-    fn into(self) -> crate::mount::Attr {
-        crate::mount::Attr{
-            type_: get_value_from_file_attributes!(self, FileAttributeIdFileType, FileAttributeFileType, from_file_type),
-            file_mode: get_value_from_file_attributes!(self, FileAttributeIdFileMode, FileAttributeFileMode, from_file_mode),
-            nlink: get_value_from_file_attributes!(self, FileAttributeIdNumLinks, FileAttributeNumLinks, from_ref),
-            uid: get_value_from_file_attributes!(self, FileAttributeIdOwner, FileAttributeOwner, from_uid_or_gid_string),
-            gid: get_value_from_file_attributes!(self, FileAttributeIdOwnerGroup, FileAttributeOwnerGroup, from_uid_or_gid_string),
-            filesize: get_value_from_file_attributes!(self, FileAttributeIdFileSize, FileAttributeFileSize, from_ref),
-            used: get_value_from_file_attributes!(self, FileAttributeIdSpaceUsed, FileAttributeSpaceUsed, from_ref),
-            spec_data: get_value_from_file_attributes!(self, FileAttributeIdRawDev, FileAttributeRawDev, from_device_data),
-            fsid: get_value_from_file_attributes!(self, FileAttributeIdFsId, FileAttributeFsId, from_fs_id),
-            fileid: get_value_from_file_attributes!(self, FileAttributeIdFileId, FileAttributeFileId, from_file_id),
-            atime: get_value_from_file_attributes!(self, FileAttributeIdTimeAccess, FileAttributeTimeAccess, from_time),
-            mtime: get_value_from_file_attributes!(self, FileAttributeIdTimeModify, FileAttributeTimeModify, from_time),
-            ctime: get_value_from_file_attributes!(self, FileAttributeIdTimeCreate, FileAttributeTimeCreate, from_time),
+impl From<&crate::Auth> for nfs4_client::OpaqueAuth {
+    fn from(val: &crate::Auth) -> Self {
+        match val.flavor {
+            crate::AuthFlavor::Unix => {
+                nfs4_client::OpaqueAuth::auth_sys(nfs4_client::AuthSysParameters {
+                    stamp: 0,
+                    machine_name: "nfs-rs".into(),
+                    uid: nfs4_client::Uid(val.uid),
+                    gid: nfs4_client::Gid(val.gid),
+                    gids: Vec::new(),
+                })
+            }
         }
     }
 }
 
-impl Into<crate::mount::ReaddirEntry> for nfs4::DirectoryEntry {
-    fn into(self) -> crate::mount::ReaddirEntry {
-        let fileid = match self.attrs.get(FileAttributeIdFileId) {
+impl From<crate::shared::Time> for nfs4::Time {
+    fn from(val: crate::shared::Time) -> Self {
+        nfs4::Time {
+            seconds: val.seconds as i64,
+            nseconds: val.nseconds,
+        }
+    }
+}
+
+impl From<nfs4::GetAttrRes> for crate::mount::Pathconf {
+    fn from(val: nfs4::GetAttrRes) -> Self {
+        val.object_attributes.into()
+    }
+}
+
+impl From<nfs4::FileAttributes> for crate::mount::Pathconf {
+    fn from(val: nfs4::FileAttributes) -> Self {
+        crate::mount::Pathconf {
+            linkmax: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdMaxLink,
+                FileAttributeMaxLink,
+                from_ref
+            ),
+            name_max: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdMaxName,
+                FileAttributeMaxName,
+                from_ref
+            ),
+            no_trunc: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdNoTrunc,
+                FileAttributeNoTrunc,
+                from_ref
+            ),
+            chown_restricted: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdChownRestricted,
+                FileAttributeChownRestricted,
+                from_ref
+            ),
+            case_insensitive: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdCaseInsensitive,
+                FileAttributeCaseInsensitive,
+                from_ref
+            ),
+            case_preserving: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdCasePreserving,
+                FileAttributeCasePreserving,
+                from_ref
+            ),
+            attr: Some(val.into()),
+        }
+    }
+}
+
+impl From<nfs4::GetAttrRes> for crate::mount::Attr {
+    fn from(val: nfs4::GetAttrRes) -> Self {
+        val.object_attributes.into()
+    }
+}
+
+impl From<nfs4::FileAttributes> for crate::mount::Attr {
+    fn from(val: nfs4::FileAttributes) -> Self {
+        crate::mount::Attr {
+            type_: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdFileType,
+                FileAttributeFileType,
+                from_file_type
+            ),
+            file_mode: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdFileMode,
+                FileAttributeFileMode,
+                from_file_mode
+            ),
+            nlink: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdNumLinks,
+                FileAttributeNumLinks,
+                from_ref
+            ),
+            uid: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdOwner,
+                FileAttributeOwner,
+                from_uid_or_gid_string
+            ),
+            gid: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdOwnerGroup,
+                FileAttributeOwnerGroup,
+                from_uid_or_gid_string
+            ),
+            filesize: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdFileSize,
+                FileAttributeFileSize,
+                from_ref
+            ),
+            used: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdSpaceUsed,
+                FileAttributeSpaceUsed,
+                from_ref
+            ),
+            spec_data: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdRawDev,
+                FileAttributeRawDev,
+                from_device_data
+            ),
+            fsid: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdFsId,
+                FileAttributeFsId,
+                from_fs_id
+            ),
+            fileid: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdFileId,
+                FileAttributeFileId,
+                from_file_id
+            ),
+            atime: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdTimeAccess,
+                FileAttributeTimeAccess,
+                from_time
+            ),
+            mtime: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdTimeModify,
+                FileAttributeTimeModify,
+                from_time
+            ),
+            ctime: get_value_from_file_attributes!(
+                val,
+                FileAttributeIdTimeCreate,
+                FileAttributeTimeCreate,
+                from_time
+            ),
+        }
+    }
+}
+
+impl From<nfs4::DirectoryEntry> for crate::mount::ReaddirEntry {
+    fn from(val: nfs4::DirectoryEntry) -> Self {
+        let fileid = match val.attrs.get(FileAttributeIdFileId) {
             Some(FileAttributeFileId(value)) => from_file_id(value),
             _ => Default::default(),
         };
-        crate::mount::ReaddirEntry{
-            file_name: self.name.to_string(),
+        crate::mount::ReaddirEntry {
+            file_name: val.name.to_string(),
             fileid,
         }
     }
 }
 
-impl Into<crate::mount::ReaddirplusEntry> for nfs4::DirectoryEntry {
-    fn into(self) -> crate::mount::ReaddirplusEntry {
-        let attrs = self.attrs;
-        let handle = get_value_from_file_attributes!(attrs, FileAttributeIdFileHandle, FileAttributeFileHandle, from_file_handle);
+impl From<nfs4::DirectoryEntry> for crate::mount::ReaddirplusEntry {
+    fn from(val: nfs4::DirectoryEntry) -> Self {
+        let attrs = val.attrs;
+        let handle = get_value_from_file_attributes!(
+            attrs,
+            FileAttributeIdFileHandle,
+            FileAttributeFileHandle,
+            from_file_handle
+        );
         let attr: crate::mount::Attr = attrs.into();
         let fileid = attr.fileid;
-        crate::mount::ReaddirplusEntry{
+        crate::mount::ReaddirplusEntry {
             fileid,
-            file_name: self.name.to_string(),
+            file_name: val.name.to_string(),
             attr: Some(attr),
             handle,
         }
@@ -278,13 +447,351 @@ impl Into<crate::mount::ReaddirplusEntry> for nfs4::DirectoryEntry {
 }
 
 fn into_error(err: nfs4_client::Error) -> Error {
-    match err { // FIXME: move error codes from crate::nfs3 to crate::shared?
-        nfs4_client::Error::Protocol(nfs4::StatusError::Exist) => Error::new(io::ErrorKind::Other, crate::nfs3::ErrorCode::NFS3ERR_EXIST),
-        nfs4_client::Error::Protocol(nfs4::StatusError::NoEnt) => Error::new(io::ErrorKind::Other, crate::nfs3::ErrorCode::NFS3ERR_NOENT),
-        nfs4_client::Error::Protocol(nfs4::StatusError::NotEmpty) => Error::new(io::ErrorKind::Other, crate::nfs3::ErrorCode::NFS3ERR_NOTEMPTY),
-        nfs4_client::Error::Protocol(nfs4::StatusError::Stale) => Error::new(io::ErrorKind::Other, crate::nfs3::ErrorCode::NFS3ERR_STALE),
-        _ => Error::new(io::ErrorKind::Other, format!("received error: {:?}", err))
-    } // TODO: cover more cases in order to consistently return error codes wherever possible?
+    match err {
+        // Direct mappings: NFSv4 StatusError -> NFSv3 NfsStatus
+        // These have identical error codes in both protocols
+        nfs4_client::Error::Protocol(nfs4::StatusError::Perm) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errPerm)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NoEnt) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNoent)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Io) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errIo)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NxIo) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNxio)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Access) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Exist) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errExist)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::XDev) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errXdev)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NotDir) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNotdir)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Isdir) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errIsdir)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Inval) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::FBig) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errFbig)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NoSpc) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNospc)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::RoFs) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errRofs)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::MLink) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errMlink)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NameTooLong) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNametoolong)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NotEmpty) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNotempty)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::DQuot) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errDquot)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Stale) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+
+        // NFSv4-specific errors that map to NFSv3 equivalents with code >= 10001
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadHandle) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errBadhandle)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadCookie) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errBadCookie)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NotSupported) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::TooSmall) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errToosmall)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::ServerFault) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errServerfault)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadType) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errBadtype)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Delay) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errJukebox)
+        }
+
+        // NFSv4-specific errors that map to closest NFSv3 equivalent
+        // Map to existing NFSv3 errors based on semantic similarity
+        nfs4_client::Error::Protocol(nfs4::StatusError::Denied) => {
+            // Access denied -> map to access error
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::Expired) => {
+            // Expired handle -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::FhExpired) => {
+            // File handle expired -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::StaleClientId) => {
+            // Stale client ID -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::StaleStateId) => {
+            // Stale state ID -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::OldStateId) => {
+            // Old state ID -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::AdminRevoked) => {
+            // Admin revoked -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::DeadSession) => {
+            // Dead session -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::DelegRevoked) => {
+            // Delegation revoked -> map to stale
+            Error::other(crate::shared::NfsStatus::Nfs3errStale)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::ShareDenied) => {
+            // Share denied -> map to access error
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::WrongSec) => {
+            // Wrong security -> map to access error
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::OpenMode) => {
+            // Wrong open mode -> map to access error
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::WrongCred) => {
+            // Wrong credentials -> map to access error
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::RejectDeleg) => {
+            // Reject delegation -> map to access error
+            Error::other(crate::shared::NfsStatus::Nfs3errAcces)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::ClidInUse) => {
+            // Client ID in use -> map to exist
+            Error::other(crate::shared::NfsStatus::Nfs3errExist)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::ReclaimConflict) => {
+            // Reclaim conflict -> map to exist
+            Error::other(crate::shared::NfsStatus::Nfs3errExist)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::Moved) => {
+            // File moved -> map to remote
+            Error::other(crate::shared::NfsStatus::Nfs3errRemote)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::LeaseMoved) => {
+            // Lease moved -> map to remote
+            Error::other(crate::shared::NfsStatus::Nfs3errRemote)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadStateId) => {
+            // Bad state ID -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadSeqId) => {
+            // Bad sequence ID -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NotSame) => {
+            // Not same -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::LockRange) => {
+            // Lock range -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::RestoreFh) => {
+            // Restore FH error -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::ReclaimBad) => {
+            // Bad reclaim -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadXdr) => {
+            // Bad XDR -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadOwner) => {
+            // Bad owner -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadChar) => {
+            // Bad character -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadName) => {
+            // Bad name -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadIoMode) => {
+            // Bad IO mode -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadLayout) => {
+            // Bad layout -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadSessionDigest) => {
+            // Bad session digest -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadSession) => {
+            // Bad session -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadSlot) => {
+            // Bad slot -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::ConnNotBoundToSession) => {
+            // Connection not bound -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::SeqMisordered) => {
+            // Sequence misordered -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::SequencePos) => {
+            // Sequence position -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::UnsafeCompound) => {
+            // Unsafe compound -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::OpNotInSession) => {
+            // Op not in session -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::SeqFalseRetry) => {
+            // Sequence false retry -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadHighSlot) => {
+            // Bad high slot -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::WrongType) => {
+            // Wrong type -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NotOnlyOp) => {
+            // Not only op -> map to inval
+            Error::other(crate::shared::NfsStatus::Nfs3errInval)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::AttrNotSupported) => {
+            // Attribute not supported -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::LockNotSupported) => {
+            // Lock not supported -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::OpIllegal) => {
+            // Illegal operation -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::UnknownLayoutType) => {
+            // Unknown layout type -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::HashAlgUnsupported) => {
+            // Hash algorithm unsupported -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::EncrAlgUnsupported) => {
+            // Encryption algorithm unsupported -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::DirDelegUnavail) => {
+            // Directory delegation unavailable -> map to notsupp
+            Error::other(crate::shared::NfsStatus::Nfs3errNotsupp)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::NoFileHandle) => {
+            // No file handle -> map to badhandle
+            Error::other(crate::shared::NfsStatus::Nfs3errBadhandle)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::Grace) => {
+            // Grace period -> map to jukebox
+            Error::other(crate::shared::NfsStatus::Nfs3errJukebox)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::NoGrace) => {
+            // No grace -> map to jukebox
+            Error::other(crate::shared::NfsStatus::Nfs3errJukebox)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::LayoutTryLater) => {
+            // Layout try later -> map to jukebox
+            Error::other(crate::shared::NfsStatus::Nfs3errJukebox)
+        }
+        nfs4_client::Error::Protocol(nfs4::StatusError::RetryUncachedRep) => {
+            // Retry uncached -> map to jukebox
+            Error::other(crate::shared::NfsStatus::Nfs3errJukebox)
+        }
+
+        nfs4_client::Error::Protocol(nfs4::StatusError::BadRange) => {
+            // Bad range -> could map to fbig or inval, using fbig
+            Error::other(crate::shared::NfsStatus::Nfs3errFbig)
+        }
+
+        // NFSv4-specific errors that don't have good NFSv3 equivalents
+        // Map to IO error as a generic fallback
+        nfs4_client::Error::Protocol(nfs4::StatusError::Same)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::Locked)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::MinorVersMismatch)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::Symlink)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::LocksHeld)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::Deadlock)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::FileOpen)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::CbPathDown)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::CompleteAlready)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::DelegAlreadyWanted)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::BackChanBusy)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::LayoutUnavailable)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::NoMatchingLayout)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::RecallConflict)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::ReqTooBig)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::RepTooBig)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::RepTooBigToCache)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::TooManyOps)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::ClientIdBusy)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::PnfsIoHole)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::PnfsNoLayout)
+        | nfs4_client::Error::Protocol(nfs4::StatusError::ReturnConflict) => {
+            Error::other(crate::shared::NfsStatus::Nfs3errIo)
+        }
+
+        // Pass through IO errors
+        nfs4_client::Error::Io(io_err) => io_err,
+
+        // Catch-all for any other errors
+        _ => Error::other(format!("received error: {err:?}")),
+    }
 }
 
 fn from_ref<T: Clone>(value: &T) -> T {
@@ -312,7 +819,7 @@ fn from_file_mode(file_mode: &nfs4::Mode) -> u32 {
     file_mode.0
 }
 
-fn from_uid_or_gid_string(uid_or_gid: &String) -> u32 {
+fn from_uid_or_gid_string(uid_or_gid: &str) -> u32 {
     uid_or_gid.parse().unwrap_or_default()
 }
 
@@ -332,7 +839,7 @@ fn from_file_id(fileid: &nfs4::FileId) -> u64 {
 }
 
 fn from_time(time: &nfs4::Time) -> crate::shared::Time {
-    crate::shared::Time{
+    crate::shared::Time {
         seconds: time.seconds as u32,
         nseconds: time.nseconds,
     }
@@ -361,29 +868,37 @@ pub(super) struct Mount4p1 {
 impl Mount4p1 {
     fn get_dir_fh_and_entry_name(&self, path: &str) -> Result<(Vec<u8>, String)> {
         let (dir_path, name) = split_path(path)?;
-        self._lookup_path(&dir_path)
-            .map(|fh| (fh, name))
+        self._lookup_path(&dir_path).map(|fh| (fh, name))
     }
 
-    fn get_obj_res_with_attrs(client: &mut nfs4_client::Client<TcpStream>, fh: &Vec<u8>) -> Result<ObjRes> {
+    fn get_obj_res_with_attrs(
+        client: &mut nfs4_client::Client<TcpStream>,
+        fh: &[u8],
+    ) -> Result<ObjRes> {
         let attr = Self::_getattr(client, fh)?;
-        Ok(ObjRes{
+        Ok(ObjRes {
             attr: Some(attr),
             fh: fh.to_vec(),
         })
     }
 
-    fn _getattr(client: &mut nfs4_client::Client<TcpStream>, fh: &Vec<u8>) -> Result<crate::mount::Attr> {
+    fn _getattr(
+        client: &mut nfs4_client::Client<TcpStream>,
+        fh: &[u8],
+    ) -> Result<crate::mount::Attr> {
         let handle = nfs4::FileHandle(fh.to_vec());
-        client.get_attr(handle)
-            .map(Into::into)
-            .map_err(into_error)
+        client.get_attr(handle).map(Into::into).map_err(into_error)
     }
 
-    fn _lookup(client: &mut nfs4_client::Client<TcpStream>, dir_fh: &Vec<u8>, entry_name: &str) -> Result<Vec<u8>> {
+    fn _lookup(
+        client: &mut nfs4_client::Client<TcpStream>,
+        dir_fh: &[u8],
+        entry_name: &str,
+    ) -> Result<Vec<u8>> {
         let cleaned = path_clean::clean(entry_name);
         let dir_handle = nfs4::FileHandle(dir_fh.to_vec());
-        client.look_up_in(dir_handle, cleaned)
+        client
+            .look_up_in(dir_handle, cleaned)
             .map(|handle| handle.0)
             .map_err(into_error)
     }
@@ -392,7 +907,7 @@ impl Mount4p1 {
         let cleaned = path_clean::clean(path);
         if let Some(cleaned_str) = cleaned.to_str() {
             if cleaned_str.is_empty() || cleaned_str == ROOT_PATH {
-                return Ok(self.root_fh.to_vec())
+                return Ok(self.root_fh.to_vec());
             }
         }
         let file_path = if cleaned.is_absolute() {
@@ -401,7 +916,8 @@ impl Mount4p1 {
             cleaned.as_path()
         };
         let mut client = self.client.write().unwrap();
-        client.look_up(self.root_path.join(file_path))
+        client
+            .look_up(self.root_path.join(file_path))
             .map(|handle| handle.0)
             .map_err(into_error)
     }
@@ -427,16 +943,34 @@ impl crate::Mount for Mount4p1 {
         self.wsize
     }
 
-    fn null(&self) -> Result<()> {
+    fn fsinfo(&self) -> Result<crate::mount::FSInfo> {
         let mut client = self.client.write().unwrap();
-        client.null()
+
+        client
+            .get_attr(nfs4::FileHandle(self.root_fh.to_vec()))
+            .map(Into::into)
             .map_err(into_error)
     }
 
-    fn access(&self, fh: &Vec<u8>, mode: u32) -> Result<u32> {
+    fn fsstat(&self) -> Result<crate::mount::FSStat> {
+        let mut client = self.client.write().unwrap();
+
+        client
+            .get_attr(nfs4::FileHandle(self.root_fh.to_vec()))
+            .map(Into::into)
+            .map_err(into_error)
+    }
+
+    fn null(&self) -> Result<()> {
+        let mut client = self.client.write().unwrap();
+        client.null().map_err(into_error)
+    }
+
+    fn access(&self, fh: &[u8], mode: u32) -> Result<u32> {
         let mut client = self.client.write().unwrap();
         let handle = nfs4::FileHandle(fh.to_vec());
-        client.access(handle, mode)
+        client
+            .access(handle, mode)
             .map(|res| res.access.bits())
             .map_err(into_error)
     }
@@ -449,10 +983,11 @@ impl crate::Mount for Mount4p1 {
         unimplemented!("close")
     }
 
-    fn commit(&self, fh: &Vec<u8>, offset: u64, count: u32) -> Result<()> {
+    fn commit(&self, fh: &[u8], offset: u64, count: u32) -> Result<()> {
         let mut client = self.client.write().unwrap();
         let handle = nfs4::FileHandle(fh.to_vec());
-        client.commit(handle, offset, count)
+        client
+            .commit(handle, offset, count)
             .map(|_commit_res| ()) // FIXME: change trait to return verifier (u64?) from commit function?
             .map_err(into_error)
     }
@@ -461,16 +996,22 @@ impl crate::Mount for Mount4p1 {
         self.commit(&self._lookup_path(path)?, offset, count)
     }
 
-    fn create(&self, dir_fh: &Vec<u8>, filename: &str, mode: u32) -> Result<ObjRes> {
+    fn create(&self, dir_fh: &[u8], filename: &str, mode: u32) -> Result<ObjRes> {
         let mut client = self.client.write().unwrap();
         let dir_handle = nfs4::FileHandle(dir_fh.to_vec());
         let now = std::time::SystemTime::now();
         let since_epoch = now.duration_since(std::time::UNIX_EPOCH).unwrap();
-        let mtime = nfs4::Time{seconds: since_epoch.as_secs() as i64, nseconds: since_epoch.subsec_nanos()};
+        let mtime = nfs4::Time {
+            seconds: since_epoch.as_secs() as i64,
+            nseconds: since_epoch.subsec_nanos(),
+        };
         let mut attrs = FileAttributes::default();
         attrs.insert(FileAttributeFileMode(FileMode(mode)));
-        attrs.insert(FileAttributeTimeModifySet(FileSetTime::SetToClientTime(mtime)));
-        let handle = client.create_file(dir_handle, filename, attrs)
+        attrs.insert(FileAttributeTimeModifySet(FileSetTime::SetToClientTime(
+            mtime,
+        )));
+        let handle = client
+            .create_file(dir_handle, filename, attrs)
             .map_err(into_error)?;
         Self::get_obj_res_with_attrs(&mut client, &handle.0)
     }
@@ -488,21 +1029,7 @@ impl crate::Mount for Mount4p1 {
         unimplemented!("delegreturn")
     }
 
-    fn fsinfo(&self) -> Result<crate::mount::FSInfo> {
-        let mut client = self.client.write().unwrap();
-        client.get_attr(nfs4::FileHandle(self.root_fh.to_vec()))
-            .map(Into::into)
-            .map_err(into_error)
-    }
-
-    fn fsstat(&self) -> Result<crate::mount::FSStat> {
-        let mut client = self.client.write().unwrap();
-        client.get_attr(nfs4::FileHandle(self.root_fh.to_vec()))
-            .map(Into::into)
-            .map_err(into_error)
-    }
-
-    fn getattr(&self, fh: &Vec<u8>) -> Result<crate::mount::Attr> {
+    fn getattr(&self, fh: &[u8]) -> Result<crate::mount::Attr> {
         let mut client = self.client.write().unwrap();
         Self::_getattr(&mut client, fh)
     }
@@ -513,7 +1040,7 @@ impl crate::Mount for Mount4p1 {
 
     fn setattr(
         &self,
-        fh: &Vec<u8>,
+        fh: &[u8],
         guard_mtime: Option<Time>,
         mode: Option<u32>,
         uid: Option<u32>,
@@ -528,18 +1055,21 @@ impl crate::Mount for Mount4p1 {
             mode.map(|m| FileAttributeFileMode(FileMode(m))),
             uid.map(|u| FileAttributeOwner(u.to_string())),
             gid.map(|g| FileAttributeOwnerGroup(g.to_string())),
-            size.map(|s| FileAttributeFileSize(s)),
+            size.map(FileAttributeFileSize),
             atime.map(|a| FileAttributeTimeAccessSet(FileSetTime::SetToClientTime(a.into()))),
             mtime.map(|m| FileAttributeTimeModifySet(FileSetTime::SetToClientTime(m.into()))),
-        ].into_iter().flatten().collect();
-        let attrs = FileAttributes::from_iter(opts.into_iter());
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
+        let attrs = FileAttributes::from_iter(opts);
         if let Some(guard_mtime) = guard_mtime {
             let verif_attrs = vec![FileAttributeTimeModify(guard_mtime.into())];
-            client.set_attr_verified(handle, attrs, FileAttributes::from_iter(verif_attrs.into_iter()))
+            client
+                .set_attr_verified(handle, attrs, FileAttributes::from_iter(verif_attrs))
                 .map_err(into_error)
         } else {
-            client.set_attr(handle, attrs)
-                .map_err(into_error)
+            client.set_attr(handle, attrs).map_err(into_error)
         }
     }
 
@@ -556,8 +1086,8 @@ impl crate::Mount for Mount4p1 {
     ) -> Result<()> {
         let obj_res = self.lookup_path(path)?;
         let guard_mtime = match (specify_guard, obj_res.attr) {
-            (true, Some(attr)) => Some(attr.mtime.into()),
-            (true, None) => self.getattr_path(path).map(|attr| Some(attr.mtime.into()))?,
+            (true, Some(attr)) => Some(attr.mtime),
+            (true, None) => self.getattr_path(path).map(|attr| Some(attr.mtime))?,
             _ => None,
         };
         self.setattr(&obj_res.fh, guard_mtime, mode, uid, gid, size, atime, mtime)
@@ -569,14 +1099,15 @@ impl crate::Mount for Mount4p1 {
 
     fn link(
         &self,
-        src_fh: &Vec<u8>,
-        dst_dir_fh: &Vec<u8>,
+        src_fh: &[u8],
+        dst_dir_fh: &[u8],
         dst_filename: &str,
     ) -> Result<crate::mount::Attr> {
         let mut client = self.client.write().unwrap();
         let src_handle = nfs4::FileHandle(src_fh.to_vec());
         let dst_dir_handle = nfs4::FileHandle(dst_dir_fh.to_vec());
-        let _ = client.link(src_handle, dst_dir_handle, dst_filename)
+        let _ = client
+            .link(src_handle, dst_dir_handle, dst_filename)
             .map_err(into_error)?;
         let fh = Self::_lookup(&mut client, dst_dir_fh, dst_filename)?;
         Self::_getattr(&mut client, &fh)
@@ -587,13 +1118,14 @@ impl crate::Mount for Mount4p1 {
         self.link(&self._lookup_path(src_path)?, &dst_dir_fh, &dst_filename)
     }
 
-    fn symlink(&self, src_path: &str, dst_dir_fh: &Vec<u8>, dst_filename: &str) -> Result<ObjRes> {
+    fn symlink(&self, src_path: &str, dst_dir_fh: &[u8], dst_filename: &str) -> Result<ObjRes> {
         let mut client = self.client.write().unwrap();
         let dst_dir_handle = nfs4::FileHandle(dst_dir_fh.to_vec());
         let mut attrs = FileAttributes::default();
         attrs.insert(FileAttributeFileMode(FileMode(0o777)));
         // XXX: unlike `client.create_file`, `client.create_link` does not need to have set modify time attr
-        let handle = client.create_link(src_path, dst_dir_handle, dst_filename, attrs)
+        let handle = client
+            .create_link(src_path, dst_dir_handle, dst_filename, attrs)
             .map_err(into_error)?;
         Self::get_obj_res_with_attrs(&mut client, &handle.0)
     }
@@ -603,10 +1135,11 @@ impl crate::Mount for Mount4p1 {
         self.symlink(src_path, &dst_dir_fh, &dst_filename)
     }
 
-    fn readlink(&self, fh: &Vec<u8>) -> Result<String> {
+    fn readlink(&self, fh: &[u8]) -> Result<String> {
         let mut client = self.client.write().unwrap();
         let handle = nfs4::FileHandle(fh.to_vec());
-        client.read_link(handle)
+        client
+            .read_link(handle)
             .map(from_read_link_res)
             .map_err(into_error)
     }
@@ -615,7 +1148,7 @@ impl crate::Mount for Mount4p1 {
         self.readlink(&self._lookup_path(path)?)
     }
 
-    fn lookup(&self, dir_fh: &Vec<u8>, filename: &str) -> Result<ObjRes> {
+    fn lookup(&self, dir_fh: &[u8], filename: &str) -> Result<ObjRes> {
         let mut client = self.client.write().unwrap();
         let fh = Self::_lookup(&mut client, dir_fh, filename)?;
         Self::get_obj_res_with_attrs(&mut client, &fh)
@@ -627,22 +1160,21 @@ impl crate::Mount for Mount4p1 {
         Self::get_obj_res_with_attrs(&mut client, &fh)
     }
 
-    fn pathconf(&self, fh: &Vec<u8>) -> Result<crate::mount::Pathconf> {
+    fn pathconf(&self, fh: &[u8]) -> Result<crate::mount::Pathconf> {
         let mut client = self.client.write().unwrap();
         let handle = nfs4::FileHandle(fh.to_vec());
-        client.get_attr(handle)
-            .map(Into::into)
-            .map_err(into_error)
+        client.get_attr(handle).map(Into::into).map_err(into_error)
     }
 
     fn pathconf_path(&self, path: &str) -> Result<crate::mount::Pathconf> {
         self.pathconf(&self._lookup_path(path)?)
     }
 
-    fn read(&self, fh: &Vec<u8>, offset: u64, count: u32) -> Result<Vec<u8>> {
+    fn read(&self, fh: &[u8], offset: u64, count: u32) -> Result<Vec<u8>> {
         let mut client = self.client.write().unwrap();
         let handle = nfs4::FileHandle(fh.to_vec());
-        client.read(handle, offset, count)
+        client
+            .read(handle, offset, count)
             .map(from_read_res)
             .map_err(into_error)
     }
@@ -651,7 +1183,7 @@ impl crate::Mount for Mount4p1 {
         self.read(&self._lookup_path(path)?, offset, count)
     }
 
-    fn write(&self, fh: &Vec<u8>, offset: u64, data: &Vec<u8>) -> Result<u32> {
+    fn write(&self, fh: &[u8], offset: u64, data: &[u8]) -> Result<u32> {
         let mut client = self.client.write().unwrap();
         let max_write_size = self.get_max_write_size();
         let data_len = data.len();
@@ -663,7 +1195,8 @@ impl crate::Mount for Mount4p1 {
             let end_index = index + chunk_size;
             let chunk = &data[index..end_index];
             let handle = nfs4::FileHandle(fh.to_vec());
-            let write_size = client.write(handle, offset, chunk.to_vec())
+            let write_size = client
+                .write(handle, offset, chunk.to_vec())
                 .map(from_write_res)
                 .map_err(into_error)?;
             remaining -= write_size;
@@ -673,16 +1206,17 @@ impl crate::Mount for Mount4p1 {
         Ok(data_len as u32)
     }
 
-    fn write_path(&self, path: &str, offset: u64, data: &Vec<u8>) -> Result<u32> {
+    fn write_path(&self, path: &str, offset: u64, data: &[u8]) -> Result<u32> {
         self.write(&self._lookup_path(path)?, offset, data)
     }
 
-    fn readdir(&self, dir_fh: &Vec<u8>) -> Result<Vec<crate::mount::ReaddirEntry>> {
+    fn readdir(&self, dir_fh: &[u8]) -> Result<Vec<crate::mount::ReaddirEntry>> {
         let mut client = self.client.write().unwrap();
         let dir_handle = nfs4::FileHandle(dir_fh.to_vec());
         let attr_ids = vec![FileAttributeIdFileId];
-        let attrs = nfs4::EnumSet::<nfs4::FileAttributeId>::from_iter(attr_ids.into_iter());
-        client.read_dir(dir_handle, attrs)
+        let attrs = nfs4::EnumSet::<nfs4::FileAttributeId>::from_iter(attr_ids);
+        client
+            .read_dir(dir_handle, attrs)
             .map(|entries| entries.into_iter().map(Into::into).collect())
             .map_err(into_error)
     }
@@ -691,7 +1225,7 @@ impl crate::Mount for Mount4p1 {
         self.readdir(&self._lookup_path(dir_path)?)
     }
 
-    fn readdirplus(&self, dir_fh: &Vec<u8>) -> Result<Vec<crate::mount::ReaddirplusEntry>> {
+    fn readdirplus(&self, dir_fh: &[u8]) -> Result<Vec<crate::mount::ReaddirplusEntry>> {
         let mut client = self.client.write().unwrap();
         let dir_handle = nfs4::FileHandle(dir_fh.to_vec());
         let attr_ids = vec![
@@ -710,8 +1244,9 @@ impl crate::Mount for Mount4p1 {
             FileAttributeIdTimeModify,
             FileAttributeIdTimeCreate,
         ];
-        let attrs = nfs4::EnumSet::<nfs4::FileAttributeId>::from_iter(attr_ids.into_iter());
-        client.read_dir(dir_handle, attrs)
+        let attrs = nfs4::EnumSet::<nfs4::FileAttributeId>::from_iter(attr_ids);
+        client
+            .read_dir(dir_handle, attrs)
             .map(|entries| entries.into_iter().map(Into::into).collect())
             .map_err(into_error)
     }
@@ -720,13 +1255,14 @@ impl crate::Mount for Mount4p1 {
         self.readdirplus(&self._lookup_path(dir_path)?)
     }
 
-    fn mkdir(&self, dir_fh: &Vec<u8>, dirname: &str, mode: u32) -> Result<ObjRes> {
+    fn mkdir(&self, dir_fh: &[u8], dirname: &str, mode: u32) -> Result<ObjRes> {
         let mut client = self.client.write().unwrap();
         let dir_handle = nfs4::FileHandle(dir_fh.to_vec());
         let mut attrs = FileAttributes::default();
         attrs.insert(FileAttributeFileMode(FileMode(mode)));
         // XXX: unlike `client.create_file`, `client.create_directory` does not need to have set modify time attr
-        let handle = client.create_directory(dir_handle, dirname, attrs)
+        let handle = client
+            .create_directory(dir_handle, dirname, attrs)
             .map_err(into_error)?;
         Self::get_obj_res_with_attrs(&mut client, &handle.0)
     }
@@ -736,10 +1272,11 @@ impl crate::Mount for Mount4p1 {
         self.mkdir(&dir_fh, &dirname, mode)
     }
 
-    fn remove(&self, dir_fh: &Vec<u8>, filename: &str) -> Result<()> {
+    fn remove(&self, dir_fh: &[u8], filename: &str) -> Result<()> {
         let mut client = self.client.write().unwrap();
         let dir_handle = nfs4::FileHandle(dir_fh.to_vec());
-        client.remove(dir_handle, filename)
+        client
+            .remove(dir_handle, filename)
             .map(|_change_info| ()) // FIXME: change trait to return change info from remove function? (what would we do for NFSv3?)
             .map_err(into_error)
     }
@@ -749,7 +1286,7 @@ impl crate::Mount for Mount4p1 {
         self.remove(&dir_fh, &filename)
     }
 
-    fn rmdir(&self, dir_fh: &Vec<u8>, dirname: &str) -> Result<()> {
+    fn rmdir(&self, dir_fh: &[u8], dirname: &str) -> Result<()> {
         self.remove(dir_fh, dirname) // XXX: NFSv4.1 has no rmdir operation, just remove (which works for both files and directories)
     }
 
@@ -760,15 +1297,16 @@ impl crate::Mount for Mount4p1 {
 
     fn rename(
         &self,
-        from_dir_fh: &Vec<u8>,
+        from_dir_fh: &[u8],
         from_filename: &str,
-        to_dir_fh: &Vec<u8>,
+        to_dir_fh: &[u8],
         to_filename: &str,
     ) -> Result<()> {
         let mut client = self.client.write().unwrap();
         let from_dir_handle = nfs4::FileHandle(from_dir_fh.to_vec());
         let to_dir_handle = nfs4::FileHandle(to_dir_fh.to_vec());
-        client.rename(from_dir_handle, to_dir_handle, from_filename, to_filename)
+        client
+            .rename(from_dir_handle, to_dir_handle, from_filename, to_filename)
             .map(|_rename_res| ()) // FIXME: change trait to return rename res (two change infos) from rename function? (what would we do for NFSv3?)
             .map_err(into_error)
     }
@@ -788,43 +1326,30 @@ impl crate::Mount for Mount4p1 {
     }
 }
 
-fn ensure_port(
-    addrs: &Vec<SocketAddr>,
-    port: u16,
-    prog: u32,
-    vers: u32,
-    auth: &crate::Auth,
-) -> Result<u16> {
-    if port != 0 {
-        return Ok(port);
-    }
-    rpc::portmap(addrs, prog, vers, auth)
-}
-
 pub(crate) fn mount(args: &crate::MountArgs) -> Result<Box<dyn crate::Mount>> {
     // start by resolving host address and assigning portmapper port to each resolved address
-    let addrs = (args.host.as_str(), rpc::PORTMAP_PORT)
+    let addrs: Vec<SocketAddr> = (args.host.as_str(), args.port) // NFSv4 always uses port 2049
         .to_socket_addrs()?
         .collect();
-    let auth = crate::Auth::new_unix("nfs-rs", args.uid, args.gid);
-    let nfsport = ensure_port(
-        &addrs,
-        args.nfsport,
-        rpc::NFS_PROG,
-        rpc::NFS4_VERSION,
-        &auth,
-    )?;
-    for mut addr in addrs {
-        addr.set_port(nfsport); // replace portmapper port with NFS port obtained above
-        let res = mount_on_addr(&addr, &args, &auth);
-        if res.is_ok() {
-            return Ok(res.unwrap());
+
+    // Create a unique client identifier
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+
+    let unique_id = format!("nfs-rs-{:x}", nanos);
+
+    let auth = crate::Auth::new_unix(&unique_id, args.uid, args.gid);
+
+    for addr in addrs {
+        let res = mount_on_addr(&addr, args, &auth);
+        if let Ok(a) = res {
+            return Ok(a);
         }
     }
-    Err(io::Error::new(
-        io::ErrorKind::Other,
-        "no valid socket address",
-    ))
+
+    Err(io::Error::other("no valid socket address"))
 }
 
 fn mount_on_addr(
@@ -834,11 +1359,16 @@ fn mount_on_addr(
 ) -> Result<Box<dyn crate::Mount>> {
     let tcp_stream = TcpStream::connect(addr)?;
     let mut client = nfs4_client::Client::new(tcp_stream, Some(auth.into()))
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("nfs4_client::Client::new returned error: {:?}", e)))?;
+        .map_err(|e| io::Error::other(format!("nfs4_client::Client::new returned error: {e:?}")))?;
     let root_path = path_clean::clean(&args.dirpath);
-    let root_fh = client.look_up(&root_path)
-        .map_err(into_error)?;
+    let root_fh = client.look_up(&root_path).map_err(into_error)?;
     let rsize = args.rsize.min(client.get_max_read_size() as u32);
     let wsize = args.wsize.min(client.get_max_write_size() as u32);
-    Ok(Box::new(Mount4p1{client: Arc::new(RwLock::new(client)), root_path, root_fh: root_fh.0, rsize, wsize}))
+    Ok(Box::new(Mount4p1 {
+        client: Arc::new(RwLock::new(client)),
+        root_path,
+        root_fh: root_fh.0,
+        rsize,
+        wsize,
+    }))
 }

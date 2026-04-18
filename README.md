@@ -63,15 +63,7 @@ Arguments supported are:
 
 ## Limitations
 
-Initial implementation only provides NFSv3 client functionality - essentially it is
-similar to [go-nfs-client](https://github.com/willscott/go-nfs-client) but with all
-NFSv3 procedures implemented ([go-nfs-client](https://github.com/willscott/go-nfs-client) 
-omits some procedures, probably due to them being rarely used features of NFS).
-
-One thing that [go-nfs-client](https://github.com/willscott/go-nfs-client) does, 
-but this rust implementation does not do, is to attempt connecting from a privileged 
-port (i.e. binding source port to a port that is lower than 1024). 
-This is due to rust's `std::net` crate not offering a way to do this.
+This only support NFS v4.1
 
 ## License
 

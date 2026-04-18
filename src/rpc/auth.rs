@@ -20,7 +20,6 @@ const AUTH_BODY_MAX_SIZE: usize = 400;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum AuthFlavor {
-    Null = 0,
     Unix = 1,
 }
 
@@ -33,15 +32,6 @@ pub(crate) struct Auth {
 }
 
 impl Auth {
-    pub(crate) fn new_null() -> Self {
-        Self {
-            flavor: AuthFlavor::Null,
-            uid: 0,
-            gid: 0,
-            body: vec![],
-        }
-    }
-
     pub(crate) fn new_unix(machinename: &str, uid: u32, gid: u32) -> Self {
         let stamp = super::get_current_time();
         let unix = AuthUnix {
@@ -91,34 +81,6 @@ impl<Out: xdr_codec::Write> Pack<Out> for AuthUnix {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn auth_new_null() {
-        assert_eq!(
-            Auth::new_null(),
-            Auth {
-                flavor: AuthFlavor::Null,
-                uid: 0,
-                gid: 0,
-                body: vec![]
-            }
-        );
-    }
-
-    #[test]
-    fn auth_null_pack() {
-        let auth = Auth::new_null();
-        let mut buf = Vec::<u8>::new();
-        let res = auth.pack(&mut buf);
-        assert!(res.is_ok());
-        let expected: Vec<u8> = vec![
-            0, 0, 0, 0, // auth flavor (AuthFlavor::Null)
-            0, 0, 0, 0, // body length in bytes
-        ];
-        assert_eq!(buf, expected);
-        assert_eq!(buf.len(), res.unwrap());
-    }
-
     #[test]
     fn auth_new_unix_with_padding_of_0() {
         let actual = Auth::new_unix("machined", 1, 2);
