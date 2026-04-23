@@ -83,51 +83,51 @@ macro_rules! get_value_from_file_attributes {
     };
 }
 
-impl Into<crate::mount::FSInfo> for nfs4::GetAttrRes {
-    fn into(self) -> crate::mount::FSInfo {
-        self.object_attributes.into()
+impl From<nfs4::GetAttrRes> for crate::mount::FSInfo {
+    fn from(val: nfs4::GetAttrRes) -> Self {
+        val.object_attributes.into()
     }
 }
 
-impl Into<crate::mount::FSInfo> for nfs4::FileAttributes {
-    fn into(self) -> crate::mount::FSInfo {
+impl From<nfs4::FileAttributes> for crate::mount::FSInfo {
+    fn from(val: nfs4::FileAttributes) -> Self {
         let max_read: u64 = get_value_from_file_attributes!(
-            self,
+            val,
             FileAttributeIdMaxRead,
             FileAttributeMaxRead,
             from_ref
         );
 
         let max_write: u64 = get_value_from_file_attributes!(
-            self,
+            val,
             FileAttributeIdMaxWrite,
             FileAttributeMaxWrite,
             from_ref
         );
 
         let link_support: bool = get_value_from_file_attributes!(
-            self,
+            val,
             FileAttributeIdLinkSupport,
             FileAttributeLinkSupport,
             from_ref
         );
 
         let symlink_support: bool = get_value_from_file_attributes!(
-            self,
+            val,
             FileAttributeIdSymlinkSupport,
             FileAttributeSymlinkSupport,
             from_ref
         );
 
         let homogeneous: bool = get_value_from_file_attributes!(
-            self,
+            val,
             FileAttributeIdHomogeneous,
             FileAttributeHomogeneous,
             from_ref
         );
 
         let can_set_time: bool = get_value_from_file_attributes!(
-            self,
+            val,
             FileAttributeIdCanSetTime,
             FileAttributeCanSetTime,
             from_ref
@@ -136,19 +136,19 @@ impl Into<crate::mount::FSInfo> for nfs4::FileAttributes {
         let mut properties = 0;
 
         if link_support {
-            properties = properties | FSF_LINK;
+            properties |= FSF_LINK;
         }
 
         if symlink_support {
-            properties = properties | FSF_SYMLINK;
+            properties |= FSF_SYMLINK;
         }
 
         if homogeneous {
-            properties = properties | FSF_HOMOGENEOUS;
+            properties |= FSF_HOMOGENEOUS;
         }
 
         if can_set_time {
-            properties = properties | FSF_CANSETTIME;
+            properties |= FSF_CANSETTIME;
         }
 
         crate::mount::FSInfo {
@@ -167,14 +167,14 @@ impl Into<crate::mount::FSInfo> for nfs4::FileAttributes {
             dtpref: 1000, // FIXME: magic number taken from nfs4_client::Client::read_dir where value is hardcoded
 
             maxfilesize: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdMaxFileSize,
                 FileAttributeMaxFileSize,
                 from_ref
             ),
 
             time_delta: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdTimeDelta,
                 FileAttributeTimeDelta,
                 from_time
@@ -182,59 +182,59 @@ impl Into<crate::mount::FSInfo> for nfs4::FileAttributes {
 
             properties,
 
-            attr: Some(self.into()),
+            attr: Some(val.into()),
         }
     }
 }
 
-impl Into<crate::mount::FSStat> for nfs4::GetAttrRes {
-    fn into(self) -> crate::mount::FSStat {
-        self.object_attributes.into()
+impl From<nfs4::GetAttrRes> for crate::mount::FSStat {
+    fn from(val: nfs4::GetAttrRes) -> Self {
+        val.object_attributes.into()
     }
 }
 
-impl Into<crate::mount::FSStat> for nfs4::FileAttributes {
-    fn into(self) -> crate::mount::FSStat {
+impl From<nfs4::FileAttributes> for crate::mount::FSStat {
+    fn from(val: nfs4::FileAttributes) -> Self {
         let invarsec: u32 = 0; // FIXME: don't know if any file attribute matches NFSv3's invarsec (number of seconds for which the file system is not expected to change)
 
         crate::mount::FSStat {
             tbytes: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdSpaceTotal,
                 FileAttributeSpaceTotal,
                 from_ref
             ),
 
             fbytes: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdSpaceFree,
                 FileAttributeSpaceFree,
                 from_ref
             ),
 
             abytes: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdSpaceAvail,
                 FileAttributeSpaceAvail,
                 from_ref
             ),
 
             tfiles: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdFilesTotal,
                 FileAttributeFilesTotal,
                 from_ref
             ),
 
             ffiles: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdFilesFree,
                 FileAttributeFilesFree,
                 from_ref
             ),
 
             afiles: get_value_from_file_attributes!(
-                self,
+                val,
                 FileAttributeIdFilesAvail,
                 FileAttributeFilesAvail,
                 from_ref
@@ -242,7 +242,7 @@ impl Into<crate::mount::FSStat> for nfs4::FileAttributes {
 
             invarsec,
 
-            attr: Some(self.into()),
+            attr: Some(val.into()),
         }
     }
 }
@@ -1328,9 +1328,7 @@ impl crate::Mount for Mount4p1 {
 
 pub(crate) fn mount(args: &crate::MountArgs) -> Result<Box<dyn crate::Mount>> {
     // start by resolving host address and assigning portmapper port to each resolved address
-    let addrs: Vec<SocketAddr> = (args.host.as_str(), args.port) // NFSv4 always uses port 2049
-        .to_socket_addrs()?
-        .collect();
+    let addrs: Vec<SocketAddr> = (args.host.as_str(), args.port).to_socket_addrs()?.collect();
 
     // Create a unique client identifier
     let nanos = SystemTime::now()

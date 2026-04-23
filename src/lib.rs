@@ -391,7 +391,7 @@ mod tests {
         let res = parse_url("nfs://127.0.0.1/some/export/path");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "127.0.0.1".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -405,7 +405,7 @@ mod tests {
         let args = res.unwrap();
         assert_eq!(
             args.versions,
-            vec![NFSVersion::NFSv4p1, NFSVersion::NFSv4, NFSVersion::NFSv3]
+            vec![NFSVersion::NFSv4p1, NFSVersion::NFSv4, NFSVersion::NFSv4p1]
         );
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
@@ -418,7 +418,7 @@ mod tests {
         let res = parse_url("nfs://localhost:20490/some/export/path");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -430,7 +430,7 @@ mod tests {
         let res = parse_url("nfs://localhost/some/export/path?nfsport=20490");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -442,7 +442,7 @@ mod tests {
         let res = parse_url("nfs://localhost/some/export/path?mountport=20490");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -454,7 +454,7 @@ mod tests {
         let res = parse_url("nfs://localhost:20389/some/export/path?mountport=20490");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -466,7 +466,7 @@ mod tests {
         let res = parse_url("nfs://localhost/some/export/path?nfsport=20389&mountport=20490");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -478,7 +478,7 @@ mod tests {
         let res = parse_url("nfs://localhost:20388/some/export/path?nfsport=20389&mountport=20490");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "localhost".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -490,7 +490,7 @@ mod tests {
         let res = parse_url("nfs://127.0.0.1/some/export/path?rsize=16384");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "127.0.0.1".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -502,7 +502,7 @@ mod tests {
         let res = parse_url("nfs://127.0.0.1/some/export/path?wsize=16384");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "127.0.0.1".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -514,7 +514,7 @@ mod tests {
         let res = parse_url("nfs://127.0.0.1/some/export/path?readdir-buffer=4096");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "127.0.0.1".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());
@@ -526,7 +526,7 @@ mod tests {
         let res = parse_url("nfs://127.0.0.1/some/export/path?readdir-buffer=2048,4096");
         assert!(res.is_ok(), "err = {}", res.unwrap_err());
         let args = res.unwrap();
-        assert_eq!(args.versions, vec![NFSVersion::NFSv3]);
+        assert_eq!(args.versions, vec![NFSVersion::NFSv4p1]);
         assert_eq!(args.host, "127.0.0.1".to_string());
         assert_eq!(args.dirpath, "/some/export/path".to_string());
         assert_eq!((args.uid, args.gid), get_uid_gid());

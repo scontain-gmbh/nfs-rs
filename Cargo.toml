@@ -1,6 +1,6 @@
 [package]
 name = "nfs-rs"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "Apache-2.0"
 
@@ -8,13 +8,10 @@ license = "Apache-2.0"
 
 
 [dependencies]
-byteorder = "1.5.0"
-bytes = "1.10.1"
-nfs4 = { version = "0.1.0", path = "./nfs4p1-rs/nfs4" }
-nfs4_client = { version = "0.1.0", path = "./nfs4p1-rs/nfs4_client" }
+
+nfs4 = { git="https://github.com/scontain-gmbh/nfs4p1-rs", rev="8aed62e2da397a2d80f4ae8bcdf452fb5fa1eff3" }
+nfs4_client = { git="https://github.com/scontain-gmbh/nfs4p1-rs", rev="8aed62e2da397a2d80f4ae8bcdf452fb5fa1eff3" }
 nix = "0.29.0"
 path-clean = "1.0.1"
-rand = "0.9.1"
-thiserror = "2.0.12"
 url = "2.5.4"
 xdr-codec = "0.4.4"
